@@ -13,8 +13,8 @@ class GoogleStorageClient(StorageClient):
     self.storageClient = storage.Client()
     
 
-  def read(self, path: str, write_multiple: bool):
+  def read(self, sourceFileName: str, downloadFileName: str, writeMultiple: bool):
     pass
 
-  def write(self, path: str, write_multiple: bool):
+  def write(self, sourceFileName: str, uploadFileName: str, writeMultiple: bool):
     pass

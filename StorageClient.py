@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 class StorageClient(ABC):
   @abstractmethod
-  def read(self, path: str, write_multiple: bool):
+  def read(self, sourceFileName: str, downloadFileName: str, writeMultiple: bool):
     pass
 
   @abstractmethod
-  def write(self, path: str, write_multiple: bool):
+  def write(self, sourceFileName: str, uploadFileName: str, writeMultiple: bool):
     pass

@@ -1,1 +1,2 @@
 google-cloud-storage
+Pillow # required for testing using StorageClientTester. Comment out if not opening jpeg.

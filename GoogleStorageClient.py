@@ -1,20 +1,29 @@
 import os
 from google.cloud import storage
 
-from StorageClient import StorageClient
-
-# set key credentials file path
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'/path/to/credentials/project-name-123456.json'
+from storage_engine import StorageEngineClient
 
 
-
-class GoogleStorageClient(StorageClient):
+class GoogleStorageClient(StorageEngineClient):
   def __init__(self):
     self.storageClient = storage.Client()
+    self.bucket = self.storageClient.bucket("oram-bucket")
     
 
-  def read(self, sourceFileName: str, downloadFileName: str, writeMultiple: bool):
-    pass
+  def checkIfFileExists(self, blob):
+    if not blob.exists():
+      raise FileNotFoundError
+
+  def read(self, path: str, multiple: bool):
+    if multiple:
+      pass
+    else:
+      blob = self.bucket.blob(path)
+      self.checkIfFileExists(blob)
+      contents = blob.download_as_bytes()
+      return contents
+      
+
 
   def write(self, sourceFileName: str, uploadFileName: str, writeMultiple: bool):
     pass

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 class StorageEngineClient(ABC):
   @abstractmethod
   def read(self, path: str, multiple: bool = False):

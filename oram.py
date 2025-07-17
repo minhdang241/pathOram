@@ -28,10 +28,6 @@ class OramInterface(ABC):
     ) -> Optional[List[int]]:
         pass
 
-    @abstractmethod
-    def P(self, leaf: int, level: int) -> int:
-        pass
-
 
 class PathOram(OramInterface):
     """

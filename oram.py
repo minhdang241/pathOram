@@ -5,7 +5,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from common import API, DUMMY_BLOCK_INDEX, Block, Bucket, DataclassWithBytesEncoder
 from storage_engine import StorageEngine
@@ -65,7 +65,7 @@ class PathOram(OramInterface):
         self.position[block_index] = random.randint(0, self.num_leaves - 1)
 
         # Read the path and add to the stash
-        blocks, apis = self._read_l2r_nodes(leaf_node)
+        blocks, apis = self._read_path_nodes(leaf_node)
         self.S.extend([block for block in blocks if block.index != DUMMY_BLOCK_INDEX])
 
         # Find block in stash
@@ -84,14 +84,15 @@ class PathOram(OramInterface):
             self.S.append(Block(new_data, block_index))
 
         # Remap the position
-        leaf2root_path = self._get_l2r_nids(leaf_node)
+        root2leaf_path = self._get_path_nodes(leaf_node)
+        nodes = []
         for level in range(self.L, -1, -1):
             stash_prime: List[Block] = []
             remain: List[Block] = []
             for block in self.S:
                 new_leaf_node = self.position[block.index]
-                new_leaf2root_path = self._get_l2r_nids(new_leaf_node)
-                if leaf2root_path[level] == new_leaf2root_path[level]:
+                new_root2leaf_path = self._get_path_nodes(new_leaf_node)
+                if root2leaf_path[level] == new_root2leaf_path[level]:
                     stash_prime.append(block)
                 else:
                     remain.append(block)
@@ -99,11 +100,13 @@ class PathOram(OramInterface):
             self.S = remain + stash_prime[self.Z :]
             stash_prime = tmp
             stash_prime.extend([Block()] * (self.Z - len(stash_prime)))
-            api = self._write_node(leaf_node, Bucket(stash_prime))
-            apis.extend(api)
+            nodes.append(Bucket(stash_prime))
+        nodes.reverse()
+        write_apis = self._write_nodes(leaf_node, nodes)
+        apis.append(write_apis)
         return target_block.data, apis
 
-    def _get_l2r_nids(self, leaf: int) -> List[int]:
+    def _get_path_nodes(self, leaf: int) -> List[int]:
         """
         Get the node ids from the leaf to the root
         """
@@ -120,16 +123,17 @@ class PathOram(OramInterface):
                     node_index = 2 * node_index + 2
         return path
 
-    def _read_l2r_nodes(self, leaf_node: int) -> Tuple[List[Block], List[API]]:
+    def _read_path_nodes(self, leaf_node: int) -> Tuple[List[Block], List[API]]:
         """
         Read the nodes from the leaf to the root
         """
         apis: List[API] = []
-        leaf2root_path = self._get_l2r_nids(leaf_node)
+        root2leaf_path = self._get_path_nodes(leaf_node)
         blocks = []
-        for node in leaf2root_path:
+        for node in root2leaf_path:
             try:
-                data, api = self.storage_engine.read(node)
+                filename = str(node)
+                data, api = self.storage_engine.read(filename)
                 apis.append(api)
                 bucket: Bucket = self.storage_engine.reconstruct_bucket(data)
                 blocks.extend(bucket.blocks)
@@ -137,7 +141,11 @@ class PathOram(OramInterface):
                 blocks.extend([Block() for _ in range(self.Z)])
         return blocks, apis
 
-    def _write_node(self, node_id: int, bucket: Bucket) -> API:
-        data = json.dumps(bucket, indent=4, cls=DataclassWithBytesEncoder)
-        api: API = self.storage_engine.write(node_id, data)
-        return api
+    def _write_nodes(self, leaf_node: int, nodes: List[Bucket]) -> List[API]:
+        root2leaf_path = self._get_path_nodes(leaf_node)
+        node2data = {}
+        for i, node_index in enumerate(root2leaf_path):
+            data = json.dumps(nodes[i], indent=4, cls=DataclassWithBytesEncoder)
+            node2data[str(node_index)] = data
+            apis: List[API] = self.storage_engine.write_multiple(data, data)
+        return apis

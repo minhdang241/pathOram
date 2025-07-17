@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from common import API, Block, Bucket
 
@@ -23,6 +23,13 @@ class StorageEngine(ABC):
     def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
         """
         Write a file to the storage engine.
+        """
+        pass
+
+    @abstractmethod
+    def write_multiple(self, data: Dict[str, bytes]) -> List[API]:
+        """
+        Write multiple files to the storage engine.
         """
         pass
 

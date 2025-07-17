@@ -17,14 +17,14 @@ class StorageEngine(ABC):
         pass
 
     @abstractmethod
-    def write(self, filename: str, data: bytes) -> Log:
+    def write(self, filename: str, data: str) -> Log:
         """
         Write a file to the storage engine.
         """
         pass
 
     @abstractmethod
-    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
+    def write_multiple(self, data: Dict[str, str]) -> List[Log]:
         """
         Write multiple files to the storage engine.
         """
@@ -55,10 +55,10 @@ class LocalStorageEngine(StorageEngine):
     def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
         pass
 
-    def write(self, filename: str) -> Log:
+    def write(self, filename: str, data: str) -> Log:
         pass
 
-    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
+    def write_multiple(self, data: Dict[str, str]) -> List[Log]:
         pass
 
 
@@ -70,7 +70,7 @@ class GCSStorageEngine(StorageEngine):
     def read(self, filename: str) -> Tuple[bytes, Log]:
         pass
 
-    def write(self, filename: str) -> Log:
+    def write(self, filename: str, data: str) -> Log:
         pass
 
     def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:

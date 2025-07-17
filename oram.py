@@ -60,49 +60,55 @@ class PathOram(OramInterface):
         if block_index < 0 or block_index >= self.N:
             raise ValueError(f"Block index {block_index} out of range")
 
-        # Remap block to a new random path
-        leaf_node = self.position[block_index]
+        # Remap block: Randomly remap the position of block_index to a new random position.
+        x = self.position[block_index]
         self.position[block_index] = random.randint(0, self.num_leaves - 1)
 
-        # Read the path and add to the stash
-        blocks, logs = self._read_path_nodes(leaf_node)
+        # Read path: Read the path containing block_index
+        blocks, logs = self._read_path_nodes(x)
         self.S.extend([block for block in blocks if block.index != DUMMY_BLOCK_INDEX])
 
-        # Find block in stash
-        target_block: Block = None
+        # Update block: If the access is a write, update the data of the block in the stash.
+        target_block: Block = Block()
         is_found = False
 
-        for i, block in enumerate(self.S):
+        for block in self.S:
             if block.index == block_index:
                 is_found = True
                 target_block = block
                 if op == Operation.WRITE:
-                    self.S[i] = Block(new_data, block_index)
+                    block.data = new_data
                 break
 
         if not is_found and op == Operation.WRITE:
             self.S.append(Block(new_data, block_index))
 
-        # Remap the position
-        root2leaf_path = self._get_path_nodes(leaf_node)
+        """
+        Write path: Write the path back and possibly include some additional blocks
+        from the stash if they can be placed into the path. Buckets are greedily
+        filled with blocks in the stash in the order of their leaf to root, ensuring
+        that blocks get pushed as deep down into the tree as possible.
+        """
+        root2leaf_path = self._get_path_nodes(x)
         nodes = []
         for level in range(self.L, -1, -1):
-            stash_prime: List[Block] = []
-            remain: List[Block] = []
+            evictable_blocks: List[Block] = []
+            remained_blocks: List[Block] = []
             for block in self.S:
                 new_leaf_node = self.position[block.index]
                 new_root2leaf_path = self._get_path_nodes(new_leaf_node)
                 if root2leaf_path[level] == new_root2leaf_path[level]:
-                    stash_prime.append(block)
+                    evictable_blocks.append(block)
                 else:
-                    remain.append(block)
-            tmp = stash_prime[: self.Z]
-            self.S = remain + stash_prime[self.Z :]
-            stash_prime = tmp
-            stash_prime.extend([Block()] * (self.Z - len(stash_prime)))
-            nodes.append(Bucket(stash_prime))
+                    remained_blocks.append(block)
+            evictable_blocks, self.S = (
+                evictable_blocks[: self.Z],
+                remained_blocks + evictable_blocks[self.Z :],
+            )
+            evictable_blocks.extend([Block()] * (self.Z - len(evictable_blocks)))
+            nodes.append(Bucket(evictable_blocks))
         nodes.reverse()
-        write_logs = self._write_nodes(leaf_node, nodes)
+        write_logs = self._write_nodes(x, nodes)
         logs.append(write_logs)
         return target_block.data, logs
 
@@ -151,7 +157,7 @@ class PathOram(OramInterface):
         root2leaf_path = self._get_path_nodes(leaf_node)
         node2data = {}
         for i, node_index in enumerate(root2leaf_path):
-            data = json.dumps(nodes[i], indent=4, cls=DataclassWithBytesEncoder)
+            data: str = json.dumps(nodes[i], indent=4, cls=DataclassWithBytesEncoder)
             node2data[str(node_index)] = data
             logs: List[Log] = self.storage_engine.write_multiple(data, data)
         return logs

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional, Tuple
 
-from common import DUMMY_BLOCK_INDEX, Block, Bucket, DataclassWithBytesEncoder
+from common import API, DUMMY_BLOCK_INDEX, Block, Bucket, DataclassWithBytesEncoder
 from storage_engine import StorageEngine
 
 
@@ -60,7 +60,7 @@ class PathOram(OramInterface):
 
     def access(
         self, op: Operation, block_index: int, new_data: bytes
-    ) -> Tuple[List[int], List[str]]:
+    ) -> Tuple[List[int], List[API]]:
         if block_index < 0 or block_index >= self.N:
             raise ValueError(f"Block index {block_index} out of range")
 
@@ -124,11 +124,11 @@ class PathOram(OramInterface):
                     node_index = 2 * node_index + 2
         return path
 
-    def _read_l2r_nodes(self, leaf_node: int) -> Tuple[List[Block], List[str]]:
+    def _read_l2r_nodes(self, leaf_node: int) -> Tuple[List[Block], List[API]]:
         """
         Read the nodes from the leaf to the root
         """
-        apis = []
+        apis: List[API] = []
         leaf2root_path = self._get_l2r_nids(leaf_node)
         blocks = []
         for node in leaf2root_path:
@@ -141,7 +141,7 @@ class PathOram(OramInterface):
                 blocks.extend([Block() for _ in range(self.Z)])
         return blocks, apis
 
-    def _write_node(self, node_id: int, bucket: Bucket) -> List[str]:
+    def _write_node(self, node_id: int, bucket: Bucket) -> API:
         data = json.dumps(bucket, indent=4, cls=DataclassWithBytesEncoder)
-        api = self.storage_engine.write(node_id, data)
+        api: API = self.storage_engine.write(node_id, data)
         return api

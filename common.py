@@ -19,6 +19,11 @@ class Bucket:
     blocks: List[Block] = field(default_factory=list)
 
 
+@dataclass
+class API:
+    value: str = field(default_factory=str)
+
+
 class DataclassWithBytesEncoder(json.JSONEncoder):
     def default(self, obj):
         if is_dataclass(obj):

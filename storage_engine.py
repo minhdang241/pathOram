@@ -5,12 +5,12 @@ import json
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
-from common import Block, Bucket
+from common import API, Block, Bucket
 
 
 class StorageEngine(ABC):
     @abstractmethod
-    def read(self, filename: str, multiple: bool = False) -> Tuple[Bucket, str]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[Bucket, API]:
         """
         Read a file from the storage engine.
         Construct the path to the file from the filename
@@ -20,7 +20,7 @@ class StorageEngine(ABC):
         pass
 
     @abstractmethod
-    def write(self, filename: str, data: bytes, multiple: bool = False):
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> str:
         """
         Write a file to the storage engine.
         """

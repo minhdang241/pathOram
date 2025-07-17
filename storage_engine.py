@@ -5,12 +5,12 @@ import json
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
-from common import API, Block, Bucket
+from common import Block, Bucket, Log
 
 
 class StorageEngine(ABC):
     @abstractmethod
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
         """
         Read a file from the storage engine.
         Construct the path to the file from the filename
@@ -20,14 +20,14 @@ class StorageEngine(ABC):
         pass
 
     @abstractmethod
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
         """
         Write a file to the storage engine.
         """
         pass
 
     @abstractmethod
-    def write_multiple(self, data: Dict[str, bytes]) -> List[API]:
+    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         """
         Write multiple files to the storage engine.
         """
@@ -52,10 +52,10 @@ class LocalStorageEngine(StorageEngine):
     def __init__(self):
         pass
 
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
         pass
 
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
         pass
 
 
@@ -64,8 +64,8 @@ class GCSStorageEngine(StorageEngine):
         self.bucket = bucket
         pass
 
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
         pass
 
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
         pass

@@ -20,7 +20,7 @@ class Bucket:
 
 
 @dataclass
-class API:
+class Log:
     value: str = field(default_factory=str)
 
 

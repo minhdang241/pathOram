@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from common import API
+from common import Log
 from oram import Operation, PathOram
 from storage_engine import GCSStorageEngine, LocalStorageEngine
 
@@ -20,7 +20,7 @@ class PhotoManager:
                 self.storage_engine = GCSStorageEngine("<normal-bucket_name>")
         self.oram_client = PathOram(self.storage_engine)
 
-    def upload_photo(self, photo_id: str, photo_data: bytes) -> List[API]:
+    def upload_photo(self, photo_id: str, photo_data: bytes) -> List[Log]:
         if self.use_oram:
             _, apis = self.oram_client.access(Operation.WRITE, photo_id, photo_data)
             return apis
@@ -28,7 +28,7 @@ class PhotoManager:
             api = self.storage_engine.write(photo_id, photo_data)
             return [api]
 
-    def download_photo(self, photo_id: str) -> Tuple[bytes, List[API]]:
+    def download_photo(self, photo_id: str) -> Tuple[bytes, List[Log]]:
         if self.use_oram:
             data, apis = self.oram_client.access(Operation.READ, photo_id)
             return data, apis

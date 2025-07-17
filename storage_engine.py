@@ -11,12 +11,6 @@ from common import Block, Bucket, Log
 class StorageEngine(ABC):
     @abstractmethod
     def read(self, filename: str) -> Tuple[bytes, Log]:
-        """
-        Read a file from the storage engine.
-        Construct the path to the file from the filename
-        For example: path = f"gcs://{filename}"
-        Also return a list of paths
-        """
         pass
 
     def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:

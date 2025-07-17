@@ -39,7 +39,7 @@ class PathOram(OramInterface):
 
     def __init__(
         self,
-        num_blocks: int,
+        num_blocks: int = 1024,
         bucket_size: int = 4,
         storage_engine: StorageEngine = None,
     ):
@@ -49,9 +49,11 @@ class PathOram(OramInterface):
         self.storage_engine = storage_engine
         self.num_leaves = 2**self.L
         # a map from the block to the leaf
-        self.position = {
-            i: random.randint(0, self.num_leaves - 1) for i in range(self.N)
-        }
+        # self.position = {
+        # i: random.randint(0, self.num_leaves - 1) for i in range(self.N)
+        # }
+        # TODO: for demo purposes, we use a fixed position mapping
+        self.position = {i: i for i in range(self.N)}
         self.S: List[Block] = []
 
     def access(

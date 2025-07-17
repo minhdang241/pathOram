@@ -55,14 +55,15 @@ class LocalStorageEngine(StorageEngine):
         key = AESGCM.generate_key(bit_length=128)
         self.crypto_engine = EncryptionEngine(key)
         os.makedirs(self.directory, exist_ok=True)
-        print(f"LocalStorageEngine initialized for directory: '{self.directory}'")
+        print(f"INFO: LocalStorageEngine initialized for directory: '{self.directory}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
         full_path = os.path.join(self.directory, filename)
         try:
             with open(full_path, "rb") as file:
                 ciphertext_bytes = file.read()
-            plaintext_bytes = self.crypto_engine.decrypt(ciphertext_bytes)
+            plaintext_bytes = ciphertext_bytes
+            # plaintext_bytes = self.crypto_engine.decrypt(ciphertext_bytes)
             return plaintext_bytes, Log(value=f"GET /{full_path}")
         except Exception as e:
             return b"", Log(value=f"Error reading {full_path}: {str(e)}")

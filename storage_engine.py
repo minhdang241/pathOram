@@ -10,7 +10,7 @@ from common import Block, Bucket
 
 class StorageEngine(ABC):
     @abstractmethod
-    def read(self, path: str, multiple: bool = False) -> Tuple[Bucket, str]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[Bucket, str]:
         """
         Read a file from the storage engine.
         Construct the path to the file from the filename
@@ -20,7 +20,7 @@ class StorageEngine(ABC):
         pass
 
     @abstractmethod
-    def write(self, path: str, multiple: bool = False):
+    def write(self, filename: str, data: bytes, multiple: bool = False):
         """
         Write a file to the storage engine.
         """
@@ -28,7 +28,7 @@ class StorageEngine(ABC):
 
     def reconstruct_bucket(self, data: bytes) -> Bucket:
         """
-        Reconstruct a bucket from the data.
+        Reconstruct a node (Bucket) from the data.
         """
         json_string = data.decode("utf-8")  # convert binary to string
         data_dict = json.loads(json_string)

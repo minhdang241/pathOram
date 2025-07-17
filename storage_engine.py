@@ -50,3 +50,15 @@ class LocalStorageEngine(StorageEngine):
 
     def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
         pass
+
+
+class GCSStorageEngine(StorageEngine):
+    def __init__(self, bucket: str):
+        self.bucket = bucket
+        pass
+
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
+        pass
+
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
+        pass

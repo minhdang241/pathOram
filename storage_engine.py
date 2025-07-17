@@ -10,7 +10,7 @@ from common import API, Block, Bucket
 
 class StorageEngine(ABC):
     @abstractmethod
-    def read(self, filename: str, multiple: bool = False) -> Tuple[Bucket, API]:
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
         """
         Read a file from the storage engine.
         Construct the path to the file from the filename
@@ -20,7 +20,7 @@ class StorageEngine(ABC):
         pass
 
     @abstractmethod
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> str:
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
         """
         Write a file to the storage engine.
         """
@@ -39,3 +39,14 @@ class StorageEngine(ABC):
             block = Block(reconstructed_data, block_dict.get("index"))
             blocks.append(block)
         return Bucket(blocks)
+
+
+class LocalStorageEngine(StorageEngine):
+    def __init__(self):
+        pass
+
+    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, API]:
+        pass
+
+    def write(self, filename: str, data: bytes, multiple: bool = False) -> API:
+        pass

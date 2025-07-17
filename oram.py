@@ -65,7 +65,7 @@ class PathOram(OramInterface):
         self.position[block_index] = random.randint(0, self.num_leaves - 1)
 
         # Read the path and add to the stash
-        blocks, apis = self._read_path_nodes(leaf_node)
+        blocks, logs = self._read_path_nodes(leaf_node)
         self.S.extend([block for block in blocks if block.index != DUMMY_BLOCK_INDEX])
 
         # Find block in stash
@@ -102,9 +102,9 @@ class PathOram(OramInterface):
             stash_prime.extend([Block()] * (self.Z - len(stash_prime)))
             nodes.append(Bucket(stash_prime))
         nodes.reverse()
-        write_apis = self._write_nodes(leaf_node, nodes)
-        apis.append(write_apis)
-        return target_block.data, apis
+        write_logs = self._write_nodes(leaf_node, nodes)
+        logs.append(write_logs)
+        return target_block.data, logs
 
     def _get_path_nodes(self, leaf: int) -> List[int]:
         """
@@ -127,19 +127,25 @@ class PathOram(OramInterface):
         """
         Read the nodes from the leaf to the root
         """
-        apis: List[Log] = []
+        logs: List[Log] = []
         root2leaf_path = self._get_path_nodes(leaf_node)
         blocks = []
+        read_paths = []
         for node in root2leaf_path:
-            try:
-                filename = str(node)
-                data, api = self.storage_engine.read(filename)
-                apis.append(api)
-                bucket: Bucket = self.storage_engine.reconstruct_bucket(data)
+            filename = str(node)
+            read_paths.append(filename)
+
+        try:
+            result: List[Tuple[bytes, Log]] = self.storage_engine.read_multiple(
+                read_paths
+            )
+            for blob, log in result:
+                logs.append(log)
+                bucket: Bucket = self.storage_engine.reconstruct_bucket(blob)
                 blocks.extend(bucket.blocks)
-            except Exception:
-                blocks.extend([Block() for _ in range(self.Z)])
-        return blocks, apis
+        except Exception:
+            blocks.extend([Block() for _ in range(self.Z)])
+        return blocks, logs
 
     def _write_nodes(self, leaf_node: int, nodes: List[Bucket]) -> List[Log]:
         root2leaf_path = self._get_path_nodes(leaf_node)
@@ -147,5 +153,5 @@ class PathOram(OramInterface):
         for i, node_index in enumerate(root2leaf_path):
             data = json.dumps(nodes[i], indent=4, cls=DataclassWithBytesEncoder)
             node2data[str(node_index)] = data
-            apis: List[Log] = self.storage_engine.write_multiple(data, data)
-        return apis
+            logs: List[Log] = self.storage_engine.write_multiple(data, data)
+        return logs

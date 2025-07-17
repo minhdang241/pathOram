@@ -10,7 +10,7 @@ from common import Block, Bucket, Log
 
 class StorageEngine(ABC):
     @abstractmethod
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
+    def read(self, filename: str) -> Tuple[bytes, Log]:
         """
         Read a file from the storage engine.
         Construct the path to the file from the filename
@@ -19,8 +19,11 @@ class StorageEngine(ABC):
         """
         pass
 
+    def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
+        pass
+
     @abstractmethod
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
+    def write(self, filename: str, data: bytes) -> Log:
         """
         Write a file to the storage engine.
         """
@@ -52,10 +55,16 @@ class LocalStorageEngine(StorageEngine):
     def __init__(self):
         pass
 
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
+    def read(self, filename: str) -> Tuple[bytes, Log]:
         pass
 
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
+    def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
+        pass
+
+    def write(self, filename: str) -> Log:
+        pass
+
+    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         pass
 
 
@@ -64,8 +73,11 @@ class GCSStorageEngine(StorageEngine):
         self.bucket = bucket
         pass
 
-    def read(self, filename: str, multiple: bool = False) -> Tuple[bytes, Log]:
+    def read(self, filename: str) -> Tuple[bytes, Log]:
         pass
 
-    def write(self, filename: str, data: bytes, multiple: bool = False) -> Log:
+    def write(self, filename: str) -> Log:
+        pass
+
+    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         pass

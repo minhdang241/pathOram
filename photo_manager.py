@@ -22,16 +22,16 @@ class PhotoManager:
 
     def upload_photo(self, photo_id: str, photo_data: bytes) -> List[Log]:
         if self.use_oram:
-            _, apis = self.oram_client.access(Operation.WRITE, photo_id, photo_data)
-            return apis
+            _, logs = self.oram_client.access(Operation.WRITE, photo_id, photo_data)
+            return logs
         else:
-            api = self.storage_engine.write(photo_id, photo_data)
-            return [api]
+            log = self.storage_engine.write(photo_id, photo_data)
+            return [log]
 
     def download_photo(self, photo_id: str) -> Tuple[bytes, List[Log]]:
         if self.use_oram:
-            data, apis = self.oram_client.access(Operation.READ, photo_id)
-            return data, apis
+            data, logs = self.oram_client.access(Operation.READ, photo_id)
+            return data, logs
         else:
-            data, api = self.storage_engine.read(photo_id)
-            return data, [api]
+            data, log = self.storage_engine.read(photo_id)
+            return data, [log]

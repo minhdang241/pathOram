@@ -1,5 +1,5 @@
 # Project Description
-A web application that allows users to store and view photos, but with a backend that uses Path ORAM to ensure the storage provider (Google Cloud Storage) cannot learn which photos are being accessed (access pattern privacy). The system will visually demonstrate this privacy by contrasting it with a naive, unprotected approach. 
+A web application that allows users to store and view photos, but with a backend that uses Path ORAM to ensure the storage provider (Google Cloud Storage) cannot learn which photos are being accessed (access pattern privacy). The system will visually demonstrate this privacy by contrasting it with a naive, unprotected approach.
 
 The system has three main components:
 - **Frontend**: enable user interacts with the system
@@ -11,3 +11,9 @@ The system has three main components:
 Providing 2 views:
 - **Unprotected view**: user clicks a photo, the server log shows a single, revealing request: `GET /unprotected-bucket/my_trip.jpg`. The access pattern is leaked.
 - **Protected view**: user clicks the same photo. The server logs shows a bunch of meaningless objects (e.g., GET /oram-bucket/5, PUT /oram-bucket/29, ...), revealing nothing about the photo itself. This shows that the access pattern has been hidden.
+
+# TODO:
+
+- Implement the upload function, otherwise, it is hard to demo with pathoram since it's tricky to set up the bucket file.
+- Enable encryption after finalizing the upload function.
+- Save the state of the position after access, which can prevents loosing track of files after reset the backend server.

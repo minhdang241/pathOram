@@ -1,7 +1,7 @@
-#!/venv/bin/python3
-
+#!/usr/bin/env python
 '''
-File for testing read from GCS. Make sure to pip install requirements before running.
+File for testing read from GCS. 
+Make sure to pip install requirements before running.
 Recommended to be run in a venv.
 Requires valid GCS credentials.
 '''
@@ -16,12 +16,12 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'comp6453-credentials.json'
 
 storageClient = GoogleStorageClient()
 # Retrieves file as a stream of bytes
-file = storageClient.read("spongebob.jpeg", False)
+file_bytes = storageClient.read("spongebob.jpeg", False)
 
 
 # Testing that image opens
 try:
-  img = Image.open(BytesIO(file))
+  img = Image.open(BytesIO(file_bytes))
   img.show()
 except Exception:
   print("Error Displaying")

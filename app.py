@@ -10,16 +10,34 @@ from photo_manager import PhotoManager
 app = Flask(__name__)
 photo_manager = PhotoManager(is_local=True)
 
+protected_log_store = []
+unprotected_log_store = []
+protected_image_url = None
+unprotected_image_url = None
+protected_latency = None
+unprotected_latency = None
+
 
 @app.route("/")
 def home():
     # Fetch logs for both protected and unprotected views
     # from your PathORAM instance to pass to the single index.html template
-    return render_template("index.html", protected_logs=[], unprotected_logs=[])
+    return render_template(
+        "index.html",
+        protected_logs=protected_log_store,
+        unprotected_logs=unprotected_log_store,
+        protected_image_url=protected_image_url,
+        unprotected_image_url=unprotected_image_url,
+        protected_latency=protected_latency,
+        unprotected_latency=unprotected_latency,
+    )
 
 
 @app.route("/access/<view_type>/<int:block_id>")
 def access(view_type, block_id):
+    global protected_log_store, unprotected_log_store
+    global protected_image_url, unprotected_image_url
+    global protected_latency, unprotected_latency
     if view_type.lower() == "protected":
         # Clear previous protected logs *before* making the new access calls
         # This ensures that only the new set of calls for this access are shown.
@@ -43,12 +61,17 @@ def access(view_type, block_id):
         print(logs)
         end_time = time.time()
         latency = end_time - start_time
+        protected_log_store.extend(logs)
+        protected_image_url = image_url
+        protected_latency = latency
         return render_template(
             "index.html",
-            unprotected_logs=[],
-            protected_logs=logs,
-            protected_image_url=image_url,
-            protected_latency=latency,
+            protected_logs=protected_log_store,
+            unprotected_logs=unprotected_log_store,
+            protected_image_url=protected_image_url,
+            protected_latency=protected_latency,
+            unprotected_image_url=unprotected_image_url,
+            unprotected_latency=unprotected_latency
         )
 
     elif view_type.lower() == "unprotected":
@@ -63,12 +86,17 @@ def access(view_type, block_id):
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
         end_time = time.time()
         latency = end_time - start_time
+        unprotected_log_store.extend(logs)
+        unprotected_image_url = image_url
+        unprotected_latency = latency
         return render_template(
             "index.html",
-            protected_logs=[],
-            unprotected_logs=logs,
-            unprotected_image_url=image_url,
-            unprotected_latency=latency,
+            protected_logs=protected_log_store,
+            unprotected_logs=unprotected_log_store,
+            protected_image_url=protected_image_url,
+            unprotected_image_url=unprotected_image_url,
+            protected_latency=protected_latency,
+            unprotected_latency=unprotected_latency,
         )
     else:
         # Handle invalid view_type, e.g., return an error or redirect home
@@ -83,6 +111,18 @@ def clear_logs(view_type):
     # Clear logs for the specified view type using your ORAM's method
     # oram.clear_logs(view_type.upper())
     # Redirect back to the home page to show cleared logs
+    global protected_log_store, unprotected_log_store
+    global protected_image_url, unprotected_image_url
+    global protected_latency, unprotected_latency
+
+    if view_type.lower() == "protected":
+        protected_log_store.clear()
+        protected_image_url = None
+        protected_latency = None
+    elif view_type.lower() == "unprotected":
+        unprotected_log_store.clear()
+        unprotected_image_url = None
+        unprotected_latency = None
     return redirect(url_for("home"))
 
 

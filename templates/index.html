@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Path ORAM Demo</title>
     <style>
@@ -8,18 +9,23 @@
             padding: 20px;
             text-align: center;
         }
+
         .container {
             display: flex;
             justify-content: space-around;
             margin-top: 30px;
         }
+
         .view-section {
-            width: 45%; /* Adjust as needed */
+            width: 45%;
+            /* Adjust as needed */
             border: 1px solid #eee;
             padding: 20px;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-            text-align: left; /* Align content within the section to the left */
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            /* Align content within the section to the left */
         }
+
         .file-links div {
             display: inline-block;
             margin: 10px;
@@ -27,35 +33,45 @@
             padding: 10px;
             text-align: center;
         }
+
         .api-logs {
             margin-top: 30px;
             background: #f9f9f9;
             padding: 15px;
             border-radius: 5px;
-            max-height: 200px; /* Limit height for logs */
-            overflow-y: auto; /* Add scroll if logs exceed height */
+            max-height: 200px;
+            /* Limit height for logs */
+            overflow-y: auto;
+            /* Add scroll if logs exceed height */
         }
+
         .api-logs strong {
             display: block;
             margin-bottom: 10px;
         }
+
         .clear-button-form {
             margin-top: 20px;
-            text-align: center; /* Center the button within its section */
+            text-align: center;
+            /* Center the button within its section */
         }
+
         .clear-button-form button {
             padding: 10px 20px;
-            background-color: #f44336; /* Red color for clear button */
+            background-color: #f44336;
+            /* Red color for clear button */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
+
         .clear-button-form button:hover {
             background-color: #d32f2f;
         }
     </style>
 </head>
+
 <body>
     <h1>Welcome to Path ORAM Demo</h1>
 
@@ -65,26 +81,35 @@
 
             <div class="file-links">
                 {% for i in range(6) %}
-                    <a href="/access/unprotected/{{ i }}">
-                        <div>
-                            File_{{ i + 1 }}.jpeg
-                        </div>
-                    </a>
+                <a href="/access/unprotected/{{ i }}">
+                    <div>
+                        File_{{ i + 1 }}.jpeg
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if image_url %}
+            <div style="text-align:center; margin: 20px 0;">
+                <img src="{{ image_url }}" alt="Selected File"
+                    style="max-width: 80%; max-height: 300px; border: 1px solid #ccc;">
+            </div>
+            {% endif %}
+
+            <div class="api-logs">
+                <strong>API Calls (Unprotected) Latency: {{ unprotected_latency }} ms</strong><br>
+                {% for log in unprotected_logs %}
+                [INFO] {{ log.value }}<br>
                 {% endfor %}
             </div>
 
-            <div class="api-logs">
-                <strong>API Calls (Unprotected)</strong><br>
-                {% for log in unprotected_logs %}
-                    [INFO] {{ log.time }} | AccessType: {{ log.access_type }} | LogicalBlock: {{ log.block_id }} | Path: P(x={{ log.path }}) | Latency: {{ log.latency }} sec<br>
-                {% endfor %}
-            </div>
 
             <div class="clear-button-form">
                 <form action="/clear_logs/unprotected" method="get">
-                  <button type="submit">🧹 Clear Logs</button>
+                    <button type="submit">🧹 Clear Logs</button>
                 </form>
             </div>
+
+
         </div>
 
         <div class="view-section">
@@ -92,24 +117,25 @@
 
             <div class="file-links">
                 {% for i in range(6) %}
-                    <a href="/access/protected/{{ i }}">
-                        <div>
-                            File_{{ i + 1 }}.jpeg
-                        </div>
-                    </a>
+                <a href="/access/protected/{{ i }}">
+                    <div>
+                        File_{{ i + 1 }}.jpeg
+                    </div>
+                </a>
                 {% endfor %}
             </div>
 
             <div class="api-logs">
                 <strong>API Calls (Protected)</strong><br>
                 {% for log in protected_logs %}
-                    [INFO] {{ log.time }} | AccessType: {{ log.access_type }} | LogicalBlock: {{ log.block_id }} | Path: P(x={{ log.path }}) | Latency: {{ log.latency }} sec<br>
+                [INFO] {{ log.time }} | AccessType: {{ log.access_type }} | LogicalBlock: {{ log.block_id }} | Path:
+                P(x={{ log.path }}) | Latency: {{ log.latency }} sec<br>
                 {% endfor %}
             </div>
 
             <div class="clear-button-form">
                 <form action="/clear_logs/protected" method="get">
-                  <button type="submit">🧹 Clear Logs</button>
+                    <button type="submit">🧹 Clear Logs</button>
                 </form>
             </div>
         </div>

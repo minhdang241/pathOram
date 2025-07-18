@@ -57,7 +57,7 @@ class PathOram(OramInterface):
         self.S: List[Block] = []
 
     def access(
-        self, op: Operation, block_index: int, new_data: bytes
+        self, op: Operation, block_index: int, new_data: Optional[bytes] = None
     ) -> Tuple[List[int], List[Log]]:
         if block_index < 0 or block_index >= self.N:
             raise ValueError(f"Block index {block_index} out of range")
@@ -69,6 +69,7 @@ class PathOram(OramInterface):
         # Read path: Read the path containing block_index
         blocks, logs = self._read_path_nodes(x)
         self.S.extend([block for block in blocks if block.index != DUMMY_BLOCK_INDEX])
+        print(self.S)
 
         # Update block: If the access is a write, update the data of the block in the stash.
         target_block: Block = Block()
@@ -76,6 +77,7 @@ class PathOram(OramInterface):
 
         for block in self.S:
             if block.index == block_index:
+                print("FOUND")
                 is_found = True
                 target_block = block
                 if op == Operation.WRITE:
@@ -111,7 +113,7 @@ class PathOram(OramInterface):
             nodes.append(Bucket(evictable_blocks))
         nodes.reverse()
         write_logs = self._write_nodes(x, nodes)
-        logs.append(write_logs)
+        logs.extend(write_logs)
         return target_block.data, logs
 
     def _get_path_nodes(self, leaf: int) -> List[int]:
@@ -137,6 +139,7 @@ class PathOram(OramInterface):
         """
         logs: List[Log] = []
         root2leaf_path = self._get_path_nodes(leaf_node)
+        print("R2L", root2leaf_path)
         blocks = []
         read_paths = []
         for node in root2leaf_path:
@@ -161,5 +164,5 @@ class PathOram(OramInterface):
         for i, node_index in enumerate(root2leaf_path):
             data: str = json.dumps(nodes[i], indent=4, cls=DataclassWithBytesEncoder)
             node2data[str(node_index)] = data
-            logs: List[Log] = self.storage_engine.write_multiple(data, data)
+            logs: List[Log] = self.storage_engine.write_multiple(node2data)
         return logs

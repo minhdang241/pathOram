@@ -89,7 +89,9 @@ class LocalStorageEngine(StorageEngine):
         full_path = os.path.join(self.directory, filename)
         try:
             plaintext_bytes = data.encode("utf-8")
-            ciphertext_bytes = self.crypto_engine.encrypt(plaintext_bytes)
+            # TODO: Enable the encryption
+            # ciphertext_bytes = self.crypto_engine.encrypt(plaintext_bytes)
+            ciphertext_bytes = plaintext_bytes
             with open(full_path, "wb") as file:
                 file.write(ciphertext_bytes)
             return Log(value=f"PUT /{full_path}")

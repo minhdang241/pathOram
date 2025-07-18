@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import base64
+import time
 
 from flask import Flask, redirect, render_template, url_for
 
 from photo_manager import PhotoManager
-from placeholder_oram import (
-    PathORAM,  # Assuming this is the correct import for your class
-)
 
 app = Flask(__name__)
 photo_manager = PhotoManager(is_local=True)
@@ -39,7 +37,19 @@ def access(view_type, block_id):
         # for _ in range(num_simulated_oram_ops):
         # oram.access("PROTECTED", block_id) # Call your ORAM's access method multiple times
         # or let its internal logic create multiple logs per call.
-        pass
+        start_time = time.time()
+        data, logs = photo_manager.download_photo(str(block_id), use_oram=True)
+        image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
+        print(logs)
+        end_time = time.time()
+        latency = end_time - start_time
+        return render_template(
+            "index.html",
+            unprotected_logs=[],
+            protected_logs=logs,
+            protected_image_url=image_url,
+            protected_latency=latency,
+        )
 
     elif view_type.lower() == "unprotected":
         # Clear previous unprotected logs *before* making the new access call
@@ -47,7 +57,6 @@ def access(view_type, block_id):
         # oram.clear_logs("UNPROTECTED")
         # Unprotected: Just one access call to your ORAM
         # oram.access("UNPROTECTED", block_id)
-        import time
 
         start_time = time.time()
         data, logs = photo_manager.download_photo(str(block_id))
@@ -58,7 +67,7 @@ def access(view_type, block_id):
             "index.html",
             protected_logs=[],
             unprotected_logs=logs,
-            image_url=image_url,
+            unprotected_image_url=image_url,
             unprotected_latency=latency,
         )
     else:

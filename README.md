@@ -1,5 +1,5 @@
 # Project Description
-A web application that allows users to store and view photos, but with a backend that uses Path ORAM to ensure the storage provider (Google Cloud Storage) cannot learn which photos are being accessed (access pattern privacy). The system will visually demonstrate this privacy by contrasting it with a naive, unprotected approach. 
+A web application that allows users to store and view photos, but with a backend that uses Path ORAM to ensure the storage provider (Google Cloud Storage) cannot learn which photos are being accessed (access pattern privacy). The system will visually demonstrate this privacy by contrasting it with a naive, unprotected approach.
 
 The system has three main components:
 - **Frontend**: enable user interacts with the system

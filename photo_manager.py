@@ -15,7 +15,9 @@ class PhotoManager:
         else:
             self.storage_engine = GCSStorageEngine("<oram-bucket_name>")
             self.oram_storage_engine = GCSStorageEngine("<normal-bucket_name>")
-        self.oram_client = PathOram(storage_engine=self.oram_storage_engine)
+        self.oram_client = PathOram(
+            num_blocks=16, storage_engine=self.oram_storage_engine
+        )
 
     def upload_photo(
         self, photo_id: str, photo_data: bytes, use_oram: bool = False
@@ -31,7 +33,8 @@ class PhotoManager:
         self, photo_id: str, use_oram: bool = False
     ) -> Tuple[bytes, List[Log]]:
         if use_oram:
-            data, logs = self.oram_client.access(Operation.READ, photo_id)
+            data, logs = self.oram_client.access(Operation.READ, int(photo_id))
+            print(data, logs)
             return data, logs
         else:
             data, log = self.storage_engine.read(photo_id)

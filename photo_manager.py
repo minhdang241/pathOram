@@ -13,8 +13,8 @@ class PhotoManager:
             self.storage_engine = LocalStorageEngine("local_storage/normal")
             self.oram_storage_engine = LocalStorageEngine("local_storage/oram")
         else:
-            self.storage_engine = GCSStorageEngine("oram-bucket")
-            self.oram_storage_engine = GCSStorageEngine("normal-bucket-comp6453")
+            self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
+            self.oram_storage_engine = GCSStorageEngine("oram-bucket")
         self.oram_client = PathOram(
             num_blocks=16, storage_engine=self.oram_storage_engine
         )

@@ -4,12 +4,15 @@ import base64
 import concurrent
 import json
 import os
+import io
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from common import Block, Bucket, EncryptionEngine, Log
+
+from google.cloud import storage
 
 
 class StorageEngine(ABC):
@@ -18,7 +21,21 @@ class StorageEngine(ABC):
         pass
 
     def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
-        pass
+        results = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future2filename = {
+                executor.submit(self.read, filename): filename for filename in filenames
+            }
+            for future in concurrent.futures.as_completed(future2filename):
+                try:
+                    results.append(future.result())
+                except Exception as e:
+                    filename = future2filename[future]
+                    full_path = os.path.join(self.directory, filename)
+                    results.append(
+                        (b"", Log(value=f"Error reading {full_path}: {str(e)}"))
+                    )
+        return results
 
     @abstractmethod
     def write(self, filename: str, data: str) -> Log:
@@ -27,12 +44,11 @@ class StorageEngine(ABC):
         """
         pass
 
-    @abstractmethod
     def write_multiple(self, data: Dict[str, str]) -> List[Log]:
-        """
-        Write multiple files to the storage engine.
-        """
-        pass
+        logs = []
+        for filename, file_data in data.items():
+            logs.append(self.write(filename, file_data))
+        return logs
 
     def reconstruct_bucket(self, data: bytes) -> Bucket:
         """
@@ -68,23 +84,6 @@ class LocalStorageEngine(StorageEngine):
         except Exception as e:
             return b"", Log(value=f"Error reading {full_path}: {str(e)}")
 
-    def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
-        results = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future2filename = {
-                executor.submit(self.read, filename): filename for filename in filenames
-            }
-            for future in concurrent.futures.as_completed(future2filename):
-                try:
-                    results.append(future.result())
-                except Exception as e:
-                    filename = future2filename[future]
-                    full_path = os.path.join(self.directory, filename)
-                    results.append(
-                        (b"", Log(value=f"Error reading {full_path}: {str(e)}"))
-                    )
-        return results
-
     def write(self, filename: str, data: str) -> Log:
         full_path = os.path.join(self.directory, filename)
         try:
@@ -98,23 +97,34 @@ class LocalStorageEngine(StorageEngine):
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
 
-    def write_multiple(self, data: Dict[str, str]) -> List[Log]:
-        logs = []
-        for filename, file_data in data.items():
-            logs.append(self.write(filename, file_data))
-        return logs
-
 
 class GCSStorageEngine(StorageEngine):
     def __init__(self, bucket: str):
-        self.bucket = bucket
-        pass
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'comp6453-credentials.json'
+        self.storageClient = storage.Client()
+        self.bucket = self.storageClient.bucket(bucket)
+        key = AESGCM.generate_key(bit_length=128)
+        self.crypto_engine = EncryptionEngine(key)
+        print(f"INFO: GCSStorageEngine initialized for bucket: '{bucket}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
-        pass
+        try:
+            blob = self.bucket.blob(filename)
+            ciphertext_bytes = blob.download_as_bytes()
+            plaintext_bytes = ciphertext_bytes
+            # plaintext_bytes = self.crypto_engine.decrypt(ciphertext_bytes)
+            return plaintext_bytes, Log(value=f"GET /{filename}")
+        except Exception as e:
+            return b"", Log(value=f"Error reading {filename}: {str(e)}")
 
     def write(self, filename: str, data: str) -> Log:
-        pass
-
-    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
-        pass
+        try:
+            plaintext_bytes = data.encode("utf-8")
+            blob = self.bucket.blob(filename)
+            # TODO: Enable the encryption
+            # ciphertext_bytes = self.crypto_engine.encrypt(plaintext_bytes)
+            ciphertext_bytes = plaintext_bytes
+            blob.upload_from_string(ciphertext_bytes) 
+            return Log(value=f"PUT /{filename}")
+        except Exception as e:
+            return Log(value=f"Error writing to {filename}: {str(e)}")

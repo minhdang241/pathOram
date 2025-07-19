@@ -26,6 +26,7 @@ wheels/
 venv/
 env/
 ENV/
+.venv
 
 # IDE
 .idea/
@@ -52,4 +53,5 @@ yarn-debug.log*
 yarn-error.logr
 .DS_Store
 
-.venv
+# Local Storage Files
+local_storage/

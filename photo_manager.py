@@ -19,7 +19,6 @@ class PhotoManager:
         self.oram_client = PathOram(
             num_blocks=16, storage_engine=self.oram_storage_engine
         )
-        import os
 
     def list_unprotected_photo_ids(self) -> List[str]:
         # List file names in local_storage/normal/ (unprotected)

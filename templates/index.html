@@ -80,10 +80,10 @@
             <h2>Unprotected View File Accessing</h2>
 
             <div class="file-links">
-                {% for i in range(6) %}
-                <a href="/access/unprotected/{{ i }}">
+                {% for img_id in unprotected_image_ids %}
+                <a href="/access/unprotected/{{ img_id }}">
                     <div>
-                        File_{{ i + 1 }}.jpeg
+                        {{ img_id }}
                     </div>
                 </a>
                 {% endfor %}

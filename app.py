@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import base64
 import time
-
-from flask import Flask, redirect, render_template, url_for
+from flask import Flask, redirect, render_template, url_for, request, flash
 
 from photo_manager import PhotoManager
 
@@ -108,6 +107,24 @@ def access(view_type, block_id):
     # After performing the access, redirect back to the home page to refresh logs
     return redirect(url_for("home"))
 
+@app.route("/upload/unprotected", methods=["POST"])
+def upload_unprotected():
+    if "photo_file" not in request.files:
+        flash("No file part")
+        return redirect(url_for("home"))
+
+    file = request.files["photo_file"]
+    if file.filename == "":
+        flash("No selected file")
+        return redirect(url_for("home"))
+
+    if file:
+        filename = file.filename
+        data = file.read()
+        logs = photo_manager.upload_photo(filename, data, use_oram=False)
+        unprotected_log_store.extend(logs)
+
+    return redirect(url_for("home"))
 
 @app.route("/clear_logs/<view_type>")
 def clear_logs(view_type):

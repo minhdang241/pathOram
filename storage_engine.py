@@ -84,18 +84,16 @@ class LocalStorageEngine(StorageEngine):
         except Exception as e:
             return b"", Log(value=f"Error reading {full_path}: {str(e)}")
 
-    def write(self, filename: str, data: str) -> Log:
+    def write(self, filename: str, data: bytes) -> Log:
         full_path = os.path.join(self.directory, filename)
         try:
-            plaintext_bytes = data.encode("utf-8")
-            # TODO: Enable the encryption
-            # ciphertext_bytes = self.crypto_engine.encrypt(plaintext_bytes)
-            ciphertext_bytes = plaintext_bytes
+            ciphertext_bytes = data
             with open(full_path, "wb") as file:
                 file.write(ciphertext_bytes)
             return Log(value=f"PUT /{full_path}")
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
+
 
 
 class GCSStorageEngine(StorageEngine):
@@ -117,14 +115,14 @@ class GCSStorageEngine(StorageEngine):
         except Exception as e:
             return b"", Log(value=f"Error reading {filename}: {str(e)}")
 
-    def write(self, filename: str, data: str) -> Log:
+    def write(self, filename: str, data: bytes) -> Log:
         try:
-            plaintext_bytes = data.encode("utf-8")
+            plaintext_bytes = data
             blob = self.bucket.blob(filename)
             # TODO: Enable the encryption
             # ciphertext_bytes = self.crypto_engine.encrypt(plaintext_bytes)
             ciphertext_bytes = plaintext_bytes
-            blob.upload_from_string(ciphertext_bytes) 
+            blob.upload_from_string(ciphertext_bytes)
             return Log(value=f"PUT /{filename}")
         except Exception as e:
             return Log(value=f"Error writing to {filename}: {str(e)}")

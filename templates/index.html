@@ -105,10 +105,17 @@
 
             <div class="clear-button-form">
                 <form action="/clear_logs/unprotected" method="get">
-                    <button type="submit">🧹 Clear Logs</button>
+                    <button type="submit">🧹 Clear</button>
                 </form>
             </div>
 
+        <div style="margin-top: 30px;">
+            <h3>Upload New Unprotected Image</h3>
+            <form action="/upload/unprotected" method="post" enctype="multipart/form-data">
+                <input type="file" name="photo_file" accept="image/*" required>
+                <input type="submit" value="Upload">
+            </form>
+        </div>
 
         </div>
 
@@ -140,7 +147,7 @@
 
             <div class="clear-button-form">
                 <form action="/clear_logs/protected" method="get">
-                    <button type="submit">🧹 Clear Logs</button>
+                    <button type="submit">🧹 Clear</button>
                 </form>
             </div>
         </div>

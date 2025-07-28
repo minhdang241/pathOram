@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import json
+import logging
 import os
 from typing import List, Tuple
 
 from common import Log
 from oram import Operation, PathOram
 from storage_engine import GCSStorageEngine, LocalStorageEngine
+
+logger = logging.getLogger(__name__)
+
+MAX_FILES = 16
 
 
 class PhotoManager:
@@ -15,11 +21,18 @@ class PhotoManager:
             self.oram_storage_engine = LocalStorageEngine(
                 "local_storage/protected_images"
             )
+            # load name2blockid from file
+            try:
+                with open("name2blockid.json", "r") as f:
+                    self.name2blockid = json.load(f)
+            except:
+                self.name2blockid = {}
         else:
             self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
             self.oram_storage_engine = GCSStorageEngine("oram-bucket")
+        self.file_counter = 0
         self.oram_client = PathOram(
-            num_blocks=16, storage_engine=self.oram_storage_engine
+            num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
         )
 
     def list_photo_ids(self) -> List[str]:
@@ -30,8 +43,17 @@ class PhotoManager:
         self, photo_id: str, photo_data: bytes, use_oram: bool = False
     ) -> List[Log]:
         if use_oram:
-            block_id = int(photo_id.split(".")[0])
+            if self.file_counter >= MAX_FILES:
+                logger.error(f"Maximum number of files reached: {MAX_FILES}")
+                return []
+            block_id = self.file_counter
             _, logs = self.oram_client.access(Operation.WRITE, block_id, photo_data)
+            self.file_counter += 1
+            self.name2blockid[photo_id] = block_id
+
+            # save name2blockid to file
+            with open("name2blockid.json", "w") as f:
+                json.dump(self.name2blockid, f)
             return logs
         else:
             log = self.storage_engine.write(photo_id, photo_data)

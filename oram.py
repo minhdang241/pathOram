@@ -1,3 +1,10 @@
+"""
+Implementation of PathORAM.
+
+We assume that the file size is equal to the block size,
+so the number of blocks is equal to the number of files.
+"""
+
 from __future__ import annotations
 
 import json

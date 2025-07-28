@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import base64
 import concurrent
-import io
 import json
+import logging
 import os
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
@@ -12,6 +12,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from google.cloud import storage
 
 from common import Block, Bucket, EncryptionEngine, Log
+
+logger = logging.getLogger(__name__)
 
 
 class StorageEngine(ABC):
@@ -74,10 +76,10 @@ class StorageEngine(ABC):
 class LocalStorageEngine(StorageEngine):
     def __init__(self, bucket: str):
         self.directory = bucket
-        key = AESGCM.generate_key(bit_length=128)
-        self.crypto_engine = EncryptionEngine(key)
+        # key = AESGCM.generate_key(bit_length=128)
+        # self.crypto_engine = EncryptionEngine(key)
         os.makedirs(self.directory, exist_ok=True)
-        print(f"INFO: LocalStorageEngine initialized for directory: '{self.directory}'")
+        logger.info(f"LocalStorageEngine initialized for directory: '{self.directory}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
         full_path = os.path.join(self.directory, filename)
@@ -107,8 +109,8 @@ class LocalStorageEngine(StorageEngine):
         return sorted(
             [
                 f
-                for f in os.listdir(self.storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
+                for f in os.listdir(self.directory)
+                if os.path.isfile(os.path.join(self.directory, f))
             ]
         )
 
@@ -118,9 +120,9 @@ class GCSStorageEngine(StorageEngine):
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"comp6453-credentials.json"
         self.storageClient = storage.Client()
         self.bucket = self.storageClient.bucket(bucket)
-        key = AESGCM.generate_key(bit_length=128)
-        self.crypto_engine = EncryptionEngine(key)
-        print(f"INFO: GCSStorageEngine initialized for bucket: '{bucket}'")
+        # key = AESGCM.generate_key(bit_length=128)
+        # self.crypto_engine = EncryptionEngine(key)
+        logger.info(f"GCSStorageEngine initialized for bucket: '{bucket}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
         try:

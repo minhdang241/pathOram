@@ -30,13 +30,12 @@ class PhotoManager:
         else:
             self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
             self.oram_storage_engine = GCSStorageEngine("oram-bucket")
-        self.file_counter = 0
+        self.file_counter = len(self.name2blockid)
         self.oram_client = PathOram(
             num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
         )
 
     def list_photo_ids(self, use_oram: bool = False) -> List[str]:
-        # List file names in local_storage/unprotected_images/ (unprotected)
         if use_oram:
             """
             Little hack here, instead of extracting the name from all the files from the storage,

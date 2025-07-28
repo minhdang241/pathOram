@@ -9,7 +9,7 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from photo_manager import PhotoManager
 
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 

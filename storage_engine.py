@@ -58,7 +58,7 @@ class StorageEngine(ABC):
         json_string = data.decode("utf-8")  # convert binary to string
         data_dict = json.loads(json_string)
         blocks: List[Block] = []
-        for block_dict in data_dict.get("blocks"):
+        for block_dict in data_dict.get("blocks", []):
             base64_data_string = block_dict.get("data", "")
             reconstructed_data = base64.b64decode(base64_data_string.encode("utf-8"))
             block = Block(

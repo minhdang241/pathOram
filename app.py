@@ -80,6 +80,7 @@ def access(view_type: str, photo_id: str):
             protected_image_ids=photo_manager.list_photo_ids(use_oram=True),
             unprotected_image_url=unprotected_image_url,
             unprotected_latency=unprotected_latency,
+            unprotected_image_ids=photo_manager.list_photo_ids(),
         )
 
     elif view_type.lower() == "unprotected":
@@ -102,6 +103,7 @@ def access(view_type: str, photo_id: str):
             protected_logs=protected_log_store,
             unprotected_logs=unprotected_log_store,
             protected_image_url=protected_image_url,
+            protected_image_ids=photo_manager.list_photo_ids(use_oram=True),
             unprotected_image_url=unprotected_image_url,
             protected_latency=protected_latency,
             unprotected_latency=unprotected_latency,

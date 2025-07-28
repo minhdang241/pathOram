@@ -72,7 +72,6 @@ class PhotoManager:
         if use_oram:
             block_id = self.name2blockid[photo_id]
             data, logs = self.oram_client.access(Operation.READ, block_id)
-            print("HERE", data)
             return data, logs
         else:
             data, log = self.storage_engine.read(photo_id)

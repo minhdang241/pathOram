@@ -160,6 +160,8 @@ class PathOram(OramInterface):
                 self.S[block.index] = block
             # We only take maximum Z blocks from the stash for this bucket.
             evictable_blocks = evictable_blocks[: self.Z]
+            for block in evictable_blocks:
+                self.S.pop(block.index, None)  # Remove from stash
             # If we have less than Z blocks, we pad with dummy blocks.
             evictable_blocks.extend([Block()] * (self.Z - len(evictable_blocks)))
             buckets.append(Bucket(evictable_blocks))

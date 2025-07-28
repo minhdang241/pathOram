@@ -65,19 +65,11 @@ class StorageEngine(ABC):
         return Bucket(blocks)
     
     @abstractmethod
-    def list_unprotected_photo_ids(self) -> List[str]:
+    def list_photo_ids(self) -> List[str]:
         '''
         List file names in unprotected bucket (unprotected)
         '''
         pass
-
-    @abstractmethod
-    def list_protected_photo_ids(self) -> List[str]:
-        '''
-        List file names in protected bucket (protected)
-        '''
-        pass
-
 
 
 
@@ -112,22 +104,12 @@ class LocalStorageEngine(StorageEngine):
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
         
-    def list_unprotected_photo_ids(self) -> List[str]:
-        # List file names in local_storage/unprotected_images/ (unprotected)
+    def list_photo_ids(self) -> List[str]:
+        # List file names in local_storage
         return sorted(
             [
                 f
                 for f in os.listdir(self.storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
-
-    def list_protected_photo_ids(self) -> List[str]:
-        # List file names in local_storage/protected_images/ (protected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.oram_storage_engine.directory)
                 if os.path.isfile(os.path.join(self.storage_engine.directory, f))
             ]
         )
@@ -166,22 +148,10 @@ class GCSStorageEngine(StorageEngine):
         except Exception as e:
             return Log(value=f"Error writing to {filename}: {str(e)}")
         
-    def list_unprotected_photo_ids(self) -> List[str]:
-        
+    def list_photo_ids(self) -> List[str]:       
         return sorted([
                 f.name
                 for f in self.storageClient.list_blobs(self.bucket)
             ])
     
-
-    def list_protected_photo_ids(self) -> List[str]:
-        pass
-        # List file names in local_storage/protected_images/ (protected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.oram_storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
 

@@ -22,7 +22,7 @@ unprotected_latency = None
 def home():
     # Fetch logs for both protected and unprotected views
     # from your PathORAM instance to pass to the single index.html template
-    image_ids = photo_manager.list_unprotected_photo_ids()
+    image_ids = photo_manager.list_photo_ids()
     return render_template(
         "index.html",
         unprotected_image_ids=image_ids,
@@ -71,7 +71,7 @@ def access(view_type, block_id):
             unprotected_logs=unprotected_log_store,
             protected_image_url=protected_image_url,
             protected_latency=protected_latency,
-            protected_image_ids=photo_manager.list_protected_photo_ids(),
+            protected_image_ids=photo_manager.list_photo_ids(),
             unprotected_image_url=unprotected_image_url,
             unprotected_latency=unprotected_latency,
         )
@@ -99,7 +99,7 @@ def access(view_type, block_id):
             unprotected_image_url=unprotected_image_url,
             protected_latency=protected_latency,
             unprotected_latency=unprotected_latency,
-            unprotected_image_ids=photo_manager.list_unprotected_photo_ids(),
+            unprotected_image_ids=photo_manager.list_photo_ids(),
         )
     else:
         # Handle invalid view_type, e.g., return an error or redirect home

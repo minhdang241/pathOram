@@ -28,21 +28,21 @@ unprotected_latency = None
 def home():
     # Fetch logs for both protected and unprotected views
     # from your PathORAM instance to pass to the single index.html template
-    image_ids = photo_manager.list_photo_ids()
     return render_template(
         "index.html",
-        unprotected_image_ids=image_ids,
         protected_logs=protected_log_store,
-        unprotected_logs=unprotected_log_store,
         protected_image_url=protected_image_url,
-        unprotected_image_url=unprotected_image_url,
         protected_latency=protected_latency,
+        protected_image_ids=photo_manager.list_photo_ids(use_oram=True),
+        unprotected_logs=unprotected_log_store,
+        unprotected_image_url=unprotected_image_url,
         unprotected_latency=unprotected_latency,
+        unprotected_image_ids=photo_manager.list_photo_ids(),
     )
 
 
-@app.route("/access/<view_type>/<path:block_id>")
-def access(view_type, block_id):
+@app.route("/access/<view_type>/<path:photo_id>")
+def access(view_type: str, photo_id: str):
     global protected_log_store, unprotected_log_store
     global protected_image_url, unprotected_image_url
     global protected_latency, unprotected_latency
@@ -64,7 +64,7 @@ def access(view_type, block_id):
         # oram.access("PROTECTED", block_id) # Call your ORAM's access method multiple times
         # or let its internal logic create multiple logs per call.
         start_time = time.time()
-        data, logs = photo_manager.download_photo(str(block_id), use_oram=True)
+        data, logs = photo_manager.download_photo(photo_id, use_oram=True)
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
         end_time = time.time()
         latency = end_time - start_time
@@ -77,7 +77,7 @@ def access(view_type, block_id):
             unprotected_logs=unprotected_log_store,
             protected_image_url=protected_image_url,
             protected_latency=protected_latency,
-            protected_image_ids=photo_manager.list_photo_ids(),
+            protected_image_ids=photo_manager.list_photo_ids(use_oram=True),
             unprotected_image_url=unprotected_image_url,
             unprotected_latency=unprotected_latency,
         )
@@ -90,7 +90,7 @@ def access(view_type, block_id):
         # oram.access("UNPROTECTED", block_id)
 
         start_time = time.time()
-        data, logs = photo_manager.download_photo(str(block_id))
+        data, logs = photo_manager.download_photo(photo_id)
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
         end_time = time.time()
         latency = end_time - start_time

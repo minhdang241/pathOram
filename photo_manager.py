@@ -5,13 +5,13 @@ import logging
 import os
 from typing import List, Tuple
 
-from common import Log
+from common import Block, Log
 from oram import Operation, PathOram
 from storage_engine import GCSStorageEngine, LocalStorageEngine
 
 logger = logging.getLogger(__name__)
 
-MAX_FILES = 16
+MAX_FILES = 8
 
 
 class PhotoManager:
@@ -35,9 +35,16 @@ class PhotoManager:
             num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
         )
 
-    def list_photo_ids(self) -> List[str]:
+    def list_photo_ids(self, use_oram: bool = False) -> List[str]:
         # List file names in local_storage/unprotected_images/ (unprotected)
-        return self.storage_engine.list_photo_ids()
+        if use_oram:
+            """
+            Little hack here, instead of extracting the name from all the files from the storage,
+            we use the name2blockid.json file to get the name of the files. :)
+            """
+            return self.name2blockid.keys()
+        else:
+            return self.storage_engine.list_photo_ids()
 
     def upload_photo(
         self, photo_id: str, photo_data: bytes, use_oram: bool = False
@@ -63,7 +70,9 @@ class PhotoManager:
         self, photo_id: str, use_oram: bool = False
     ) -> Tuple[bytes, List[Log]]:
         if use_oram:
-            data, logs = self.oram_client.access(Operation.READ, int(photo_id))
+            block_id = self.name2blockid[photo_id]
+            data, logs = self.oram_client.access(Operation.READ, block_id)
+            print("HERE", data)
             return data, logs
         else:
             data, log = self.storage_engine.read(photo_id)

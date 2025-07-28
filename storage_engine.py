@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from google.cloud import storage
 
-from common import Block, Bucket, EncryptionEngine, Log
+from common import Block, Bucket, Log
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,9 @@ class StorageEngine(ABC):
         for block_dict in data_dict.get("blocks"):
             base64_data_string = block_dict.get("data", "")
             reconstructed_data = base64.b64decode(base64_data_string.encode("utf-8"))
-            block = Block(reconstructed_data, block_dict.get("index"))
+            block = Block(
+                reconstructed_data, block_dict.get("index"), block_dict.get("name")
+            )
             blocks.append(block)
         return Bucket(blocks)
 

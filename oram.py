@@ -62,6 +62,11 @@ class PathOram(OramInterface):
         self.num_leaves = 2**self.L
         self.stash_file = "stash.json"
         if self._load_stash():
+            new_position = {}
+            # convert string keys to int keys since the json format requires the keys as string
+            for key, value in self.position.items():
+                new_position[int(key)] = value
+            self.position = new_position
             logger.info(f"Loaded existing stash from {self.stash_file}")
         else:
             logger.info(f"Initialized new stash")
@@ -76,8 +81,8 @@ class PathOram(OramInterface):
         if block_index < 0 or block_index >= self.N:
             raise ValueError(f"Block index {block_index} out of range")
 
-        # Remap block: Randomly remap the position of block_index to a new random position.
         x = self.position[block_index]
+        # Remap block: Randomly remap the position of block_index to a new random position.
         self.position[block_index] = random.randint(0, self.num_leaves - 1)
 
         # Read path: Read the path containing block_index
@@ -105,7 +110,7 @@ class PathOram(OramInterface):
         filled with blocks in the stash in the order of their leaf to root, ensuring
         that blocks get pushed as deep down into the tree as possible.
         """
-        root2leaf_path = self._get_path_nodes(x)
+        root2leaf_path = self._get_path_nodes(self.position[block_index])
         nodes = []
         for level in range(self.L, -1, -1):
             evictable_blocks: List[Block] = []
@@ -124,28 +129,29 @@ class PathOram(OramInterface):
             evictable_blocks.extend([Block()] * (self.Z - len(evictable_blocks)))
             nodes.append(Bucket(evictable_blocks))
         nodes.reverse()
-        write_logs = self._write_nodes(x, nodes)
+        write_logs = self._write_nodes(self.position[block_index], nodes)
         logs.extend(write_logs)
         # save after each access to avoid losing track of the stash when the server restarts / crashes
         self._save_stash()
         return target_block.data, logs
 
-    def _get_path_nodes(self, leaf: int) -> List[int]:
+    def _get_path_nodes(self, leaf_id: int) -> List[int]:
         """
-        Get the node ids from the leaf to the root
+        Get the node ids from the root to the leaf
         """
-        path = []
-        node_index = 0
-        for level in range(self.L + 1):
-            path.append(node_index)
-            # Determine next node based on the bits of the leaf_id
-            if level < self.L:
-                bit = (leaf >> (self.L - 1 - level)) & 1
-                if bit == 0:
-                    node_index = 2 * node_index + 1
-                else:
-                    node_index = 2 * node_index + 2
-        return path
+        path_indices = []
+        # The number of leaves is 2^L. The first leaf node index starts after all parent nodes.
+        leaf_start_index = 2**self.L - 1
+        node_index = leaf_start_index + leaf_id
+
+        while node_index >= 0:
+            path_indices.append(node_index)
+            if node_index == 0:  # Root node
+                break
+            # Move to the parent node
+            node_index = (node_index - 1) // 2
+
+        return path_indices[::-1]  # Return from root to leaf
 
     def _read_path_nodes(self, leaf_node: int) -> Tuple[List[Block], List[Log]]:
         """

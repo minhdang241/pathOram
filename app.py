@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import base64
 import time
-from flask import Flask, redirect, render_template, url_for, request, flash
+
+from flask import Flask, flash, redirect, render_template, request, url_for
 
 from photo_manager import PhotoManager
 
@@ -59,7 +60,6 @@ def access(view_type, block_id):
         start_time = time.time()
         data, logs = photo_manager.download_photo(str(block_id), use_oram=True)
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
-        print(logs)
         end_time = time.time()
         latency = end_time - start_time
         protected_log_store.extend(logs)
@@ -71,8 +71,9 @@ def access(view_type, block_id):
             unprotected_logs=unprotected_log_store,
             protected_image_url=protected_image_url,
             protected_latency=protected_latency,
+            protected_image_ids=photo_manager.list_protected_photo_ids(),
             unprotected_image_url=unprotected_image_url,
-            unprotected_latency=unprotected_latency
+            unprotected_latency=unprotected_latency,
         )
 
     elif view_type.lower() == "unprotected":
@@ -107,6 +108,7 @@ def access(view_type, block_id):
     # After performing the access, redirect back to the home page to refresh logs
     return redirect(url_for("home"))
 
+
 @app.route("/upload/unprotected", methods=["POST"])
 def upload_unprotected():
     if "photo_file" not in request.files:
@@ -125,6 +127,27 @@ def upload_unprotected():
         unprotected_log_store.extend(logs)
 
     return redirect(url_for("home"))
+
+
+@app.route("/upload/protected", methods=["POST"])
+def upload_protected():
+    if "photo_file" not in request.files:
+        flash("No file part")
+        return redirect(url_for("home"))
+
+    file = request.files["photo_file"]
+    if file.filename == "":
+        flash("No selected file")
+        return redirect(url_for("home"))
+
+    if file:
+        filename = file.filename
+        data = file.read()
+        logs = photo_manager.upload_photo(filename, data, use_oram=False)
+        unprotected_log_store.extend(logs)
+
+    return redirect(url_for("home"))
+
 
 @app.route("/clear_logs/<view_type>")
 def clear_logs(view_type):

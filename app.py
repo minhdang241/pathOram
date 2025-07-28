@@ -8,7 +8,7 @@ from flask import Flask, flash, redirect, render_template, request, url_for
 from photo_manager import PhotoManager
 
 app = Flask(__name__)
-photo_manager = PhotoManager(is_local=True)
+photo_manager = PhotoManager(is_local=False)
 
 protected_log_store = []
 unprotected_log_store = []

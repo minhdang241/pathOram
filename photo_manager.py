@@ -24,23 +24,11 @@ class PhotoManager:
 
     def list_unprotected_photo_ids(self) -> List[str]:
         # List file names in local_storage/unprotected_images/ (unprotected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
+        return self.storage_engine.list_unprotected_photo_ids()
 
     def list_protected_photo_ids(self) -> List[str]:
         # List file names in local_storage/protected_images/ (protected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.oram_storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
+        return self.storage_engine.list_protected_photo_ids()
 
     def upload_photo(
         self, photo_id: str, photo_data: bytes, use_oram: bool = False

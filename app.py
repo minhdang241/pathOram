@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 import base64
+import logging
 import time
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 
 from photo_manager import PhotoManager
 
+logging.basicConfig(
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
 app = Flask(__name__)
-photo_manager = PhotoManager(is_local=False)
+photo_manager = PhotoManager(is_local=True)
 
 protected_log_store = []
 unprotected_log_store = []
@@ -143,8 +149,8 @@ def upload_protected():
     if file:
         filename = file.filename
         data = file.read()
-        logs = photo_manager.upload_photo(filename, data, use_oram=False)
-        unprotected_log_store.extend(logs)
+        logs = photo_manager.upload_photo(filename, data, use_oram=True)
+        protected_log_store.extend(logs)
 
     return redirect(url_for("home"))
 

@@ -26,12 +26,12 @@ class PhotoManager:
         # List file names in local_storage/unprotected_images/ (unprotected)
         return self.storage_engine.list_photo_ids()
 
-
     def upload_photo(
         self, photo_id: str, photo_data: bytes, use_oram: bool = False
     ) -> List[Log]:
         if use_oram:
-            _, logs = self.oram_client.access(Operation.WRITE, photo_id, photo_data)
+            block_id = int(photo_id.split(".")[0])
+            _, logs = self.oram_client.access(Operation.WRITE, block_id, photo_data)
             return logs
         else:
             log = self.storage_engine.write(photo_id, photo_data)

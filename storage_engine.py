@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import base64
 import concurrent
+import io
 import json
 import os
-import io
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from google.cloud import storage
 
 from common import Block, Bucket, EncryptionEngine, Log
-
-from google.cloud import storage
 
 
 class StorageEngine(ABC):
@@ -44,7 +43,7 @@ class StorageEngine(ABC):
         """
         pass
 
-    def write_multiple(self, data: Dict[str, str]) -> List[Log]:
+    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         logs = []
         for filename, file_data in data.items():
             logs.append(self.write(filename, file_data))
@@ -63,14 +62,13 @@ class StorageEngine(ABC):
             block = Block(reconstructed_data, block_dict.get("index"))
             blocks.append(block)
         return Bucket(blocks)
-    
+
     @abstractmethod
     def list_photo_ids(self) -> List[str]:
-        '''
+        """
         List file names in unprotected bucket (unprotected)
-        '''
+        """
         pass
-
 
 
 class LocalStorageEngine(StorageEngine):
@@ -103,7 +101,7 @@ class LocalStorageEngine(StorageEngine):
             return Log(value=f"PUT /{full_path}")
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
-        
+
     def list_photo_ids(self) -> List[str]:
         # List file names in local_storage
         return sorted(
@@ -115,11 +113,9 @@ class LocalStorageEngine(StorageEngine):
         )
 
 
-
-
 class GCSStorageEngine(StorageEngine):
     def __init__(self, bucket: str):
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'comp6453-credentials.json'
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"comp6453-credentials.json"
         self.storageClient = storage.Client()
         self.bucket = self.storageClient.bucket(bucket)
         key = AESGCM.generate_key(bit_length=128)
@@ -147,11 +143,6 @@ class GCSStorageEngine(StorageEngine):
             return Log(value=f"PUT /{filename}")
         except Exception as e:
             return Log(value=f"Error writing to {filename}: {str(e)}")
-        
-    def list_photo_ids(self) -> List[str]:       
-        return sorted([
-                f.name
-                for f in self.storageClient.list_blobs(self.bucket)
-            ])
-    
 
+    def list_photo_ids(self) -> List[str]:
+        return sorted([f.name for f in self.storageClient.list_blobs(self.bucket)])

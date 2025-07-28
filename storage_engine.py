@@ -63,6 +63,14 @@ class StorageEngine(ABC):
             block = Block(reconstructed_data, block_dict.get("index"))
             blocks.append(block)
         return Bucket(blocks)
+    
+    @abstractmethod
+    def list_photo_ids(self) -> List[str]:
+        '''
+        List file names in unprotected bucket (unprotected)
+        '''
+        pass
+
 
 
 class LocalStorageEngine(StorageEngine):
@@ -95,6 +103,17 @@ class LocalStorageEngine(StorageEngine):
             return Log(value=f"PUT /{full_path}")
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
+        
+    def list_photo_ids(self) -> List[str]:
+        # List file names in local_storage
+        return sorted(
+            [
+                f
+                for f in os.listdir(self.storage_engine.directory)
+                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
+            ]
+        )
+
 
 
 
@@ -128,3 +147,11 @@ class GCSStorageEngine(StorageEngine):
             return Log(value=f"PUT /{filename}")
         except Exception as e:
             return Log(value=f"Error writing to {filename}: {str(e)}")
+        
+    def list_photo_ids(self) -> List[str]:       
+        return sorted([
+                f.name
+                for f in self.storageClient.list_blobs(self.bucket)
+            ])
+    
+

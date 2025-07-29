@@ -21,15 +21,7 @@ class PhotoManager:
             self.oram_storage_engine = LocalStorageEngine(
                 "local_storage/protected_images"
             )
-            # load name2blockid from file
-            self.json_file = "name2blockid.json"
-            # try:
-            #     with open("name2blockid.json", "r") as f:
-            #         self.name2blockid = json.load(f)
-            # except:
-            #     self.name2blockid = {}
         else:
-            self.json_file = "oramname2blockid.json"
             self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
             self.oram_storage_engine = GCSStorageEngine("oram-bucket")
             self.oram_client = PathOram(
@@ -37,7 +29,7 @@ class PhotoManager:
             )
 
         try:
-            with open(self.json_file, "r") as f:
+            with open("name2blockid.json", "r") as f:
                 self.name2blockid = json.load(f)
         except:
             self.name2blockid = {}
@@ -66,7 +58,7 @@ class PhotoManager:
             self.name2blockid[photo_id] = block_id
 
             # save name2blockid to file
-            with open(self.json_file, "w") as f:
+            with open("name2blockid.json", "w") as f:
                 json.dump(self.name2blockid, f)
             return logs
         else:

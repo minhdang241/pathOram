@@ -15,6 +15,7 @@ DUMMY_BLOCK_INDEX = -1
 class Block:
     data: bytes = field(default_factory=bytes)
     index: int = DUMMY_BLOCK_INDEX
+    name: str = ""
 
 
 @dataclass

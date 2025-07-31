@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import json
+import logging
 import os
 from typing import List, Tuple
 
-from common import Log
+from common import Block, Log
 from oram import Operation, PathOram
 from storage_engine import GCSStorageEngine, LocalStorageEngine
+
+logger = logging.getLogger(__name__)
+
+MAX_FILES = 8
 
 
 class PhotoManager:
@@ -18,35 +24,42 @@ class PhotoManager:
         else:
             self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
             self.oram_storage_engine = GCSStorageEngine("oram-bucket")
-        self.oram_client = PathOram(
-            num_blocks=16, storage_engine=self.oram_storage_engine
-        )
+            self.oram_client = PathOram(
+                num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
+            )
 
-    def list_unprotected_photo_ids(self) -> List[str]:
-        # List file names in local_storage/unprotected_images/ (unprotected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
+        try:
+            with open("name2blockid.json", "r") as f:
+                self.name2blockid = json.load(f)
+        except:
+            self.name2blockid = {}
+        self.file_counter = len(self.name2blockid)
 
-    def list_protected_photo_ids(self) -> List[str]:
-        # List file names in local_storage/protected_images/ (protected)
-        return sorted(
-            [
-                f
-                for f in os.listdir(self.oram_storage_engine.directory)
-                if os.path.isfile(os.path.join(self.storage_engine.directory, f))
-            ]
-        )
+    def list_photo_ids(self, use_oram: bool = False) -> List[str]:
+        if use_oram:
+            """
+            Little hack here, instead of extracting the name from all the files from the storage,
+            we use the name2blockid.json file to get the name of the files. :)
+            """
+            return self.name2blockid.keys()
+        else:
+            return self.storage_engine.list_photo_ids()
 
     def upload_photo(
         self, photo_id: str, photo_data: bytes, use_oram: bool = False
     ) -> List[Log]:
         if use_oram:
-            _, logs = self.oram_client.access(Operation.WRITE, photo_id, photo_data)
+            if self.file_counter >= MAX_FILES:
+                logger.error(f"Maximum number of files reached: {MAX_FILES}")
+                return []
+            block_id = self.file_counter
+            _, logs = self.oram_client.access(Operation.WRITE, block_id, photo_data)
+            self.file_counter += 1
+            self.name2blockid[photo_id] = block_id
+
+            # save name2blockid to file
+            with open("name2blockid.json", "w") as f:
+                json.dump(self.name2blockid, f)
             return logs
         else:
             log = self.storage_engine.write(photo_id, photo_data)
@@ -56,7 +69,8 @@ class PhotoManager:
         self, photo_id: str, use_oram: bool = False
     ) -> Tuple[bytes, List[Log]]:
         if use_oram:
-            data, logs = self.oram_client.access(Operation.READ, int(photo_id))
+            block_id = self.name2blockid[photo_id]
+            data, logs = self.oram_client.access(Operation.READ, block_id)
             return data, logs
         else:
             data, log = self.storage_engine.read(photo_id)

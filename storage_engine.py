@@ -3,16 +3,17 @@ from __future__ import annotations
 import base64
 import concurrent
 import json
+import logging
 import os
-import io
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
-from common import Block, Bucket, EncryptionEngine, Log
-
 from google.cloud import storage
+
+from common import Block, Bucket, Log
+
+logger = logging.getLogger(__name__)
 
 
 class StorageEngine(ABC):
@@ -44,7 +45,7 @@ class StorageEngine(ABC):
         """
         pass
 
-    def write_multiple(self, data: Dict[str, str]) -> List[Log]:
+    def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         logs = []
         for filename, file_data in data.items():
             logs.append(self.write(filename, file_data))
@@ -57,21 +58,30 @@ class StorageEngine(ABC):
         json_string = data.decode("utf-8")  # convert binary to string
         data_dict = json.loads(json_string)
         blocks: List[Block] = []
-        for block_dict in data_dict.get("blocks"):
+        for block_dict in data_dict.get("blocks", []):
             base64_data_string = block_dict.get("data", "")
             reconstructed_data = base64.b64decode(base64_data_string.encode("utf-8"))
-            block = Block(reconstructed_data, block_dict.get("index"))
+            block = Block(
+                reconstructed_data, block_dict.get("index"), block_dict.get("name")
+            )
             blocks.append(block)
         return Bucket(blocks)
+
+    @abstractmethod
+    def list_photo_ids(self) -> List[str]:
+        """
+        List file names in unprotected bucket (unprotected)
+        """
+        pass
 
 
 class LocalStorageEngine(StorageEngine):
     def __init__(self, bucket: str):
         self.directory = bucket
-        key = AESGCM.generate_key(bit_length=128)
-        self.crypto_engine = EncryptionEngine(key)
+        # key = AESGCM.generate_key(bit_length=128)
+        # self.crypto_engine = EncryptionEngine(key)
         os.makedirs(self.directory, exist_ok=True)
-        print(f"INFO: LocalStorageEngine initialized for directory: '{self.directory}'")
+        logger.info(f"LocalStorageEngine initialized for directory: '{self.directory}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
         full_path = os.path.join(self.directory, filename)
@@ -96,16 +106,25 @@ class LocalStorageEngine(StorageEngine):
         except Exception as e:
             return Log(value=f"Error writing to {full_path}: {str(e)}")
 
+    def list_photo_ids(self) -> List[str]:
+        # List file names in local_storage
+        return sorted(
+            [
+                f
+                for f in os.listdir(self.directory)
+                if os.path.isfile(os.path.join(self.directory, f))
+            ]
+        )
 
 
 class GCSStorageEngine(StorageEngine):
     def __init__(self, bucket: str):
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'comp6453-credentials.json'
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"comp6453-credentials.json"
         self.storageClient = storage.Client()
         self.bucket = self.storageClient.bucket(bucket)
-        key = AESGCM.generate_key(bit_length=128)
-        self.crypto_engine = EncryptionEngine(key)
-        print(f"INFO: GCSStorageEngine initialized for bucket: '{bucket}'")
+        # key = AESGCM.generate_key(bit_length=128)
+        # self.crypto_engine = EncryptionEngine(key)
+        logger.info(f"GCSStorageEngine initialized for bucket: '{bucket}'")
 
     def read(self, filename: str) -> Tuple[bytes, Log]:
         try:
@@ -128,3 +147,6 @@ class GCSStorageEngine(StorageEngine):
             return Log(value=f"PUT /{filename}")
         except Exception as e:
             return Log(value=f"Error writing to {filename}: {str(e)}")
+
+    def list_photo_ids(self) -> List[str]:
+        return sorted([f.name for f in self.storageClient.list_blobs(self.bucket)])

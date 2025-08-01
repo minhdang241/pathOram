@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benchmark Results</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .buttons {
+            margin-bottom: 30px;
+        }
+
+        .buttons form, .buttons a {
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        .buttons button, .buttons a.button-link {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .buttons button:hover, .buttons a.button-link:hover {
+            background-color: #0056b3;
+        }
+
+        .clear-button button {
+            background-color: #f44336;
+        }
+
+        .clear-button button:hover {
+            background-color: #d32f2f;
+        }
+
+        ul {
+            color: green;
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Upload & Download Benchmark Results</h2>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="buttons">
+        <!-- Refresh Button -->
+        <a href="{{ url_for('benchmark') }}" class="button-link">🔄 Refresh</a>
+
+        <!-- Clear Button -->
+        <form action="/clear_benchmark" method="post" class="clear-button">
+            <button type="submit">🧹 Clear All Benchmark Records</button>
+        </form>
+
+        <!-- Back to Home -->
+        <a href="{{ url_for('home') }}" class="button-link">🏠 Back to Home</a>
+    </div>
+
+    {% for key in ['download_protected', 'download_unprotected', 'upload_protected', 'upload_unprotected'] %}
+    {% if records[key] %}
+    <h3>{{ key.replace("_", " ").title() }}</h3>
+    <table>
+        <tr>
+            <th>Filename</th>
+            <th>Latency (s)</th>
+            <th>Size (KB)</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for r in records[key] %}
+        <tr>
+            <td>{{ r.filename }}</td>
+            <td>{{ "%.4f"|format(r.latency) }}</td>
+            <td>{{ "%.2f"|format(r.size_kb) }}</td>
+            <td>{{ r.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    {% endfor %}
+</body>
+</html>

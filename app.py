@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import logging
 import time
+from datetime import datetime
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 
@@ -14,7 +15,8 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-photo_manager = PhotoManager(is_local=False)
+photo_manager = PhotoManager(is_local=True)
+app.secret_key = "7832"
 
 protected_log_store = []
 unprotected_log_store = []
@@ -22,6 +24,13 @@ protected_image_url = None
 unprotected_image_url = None
 protected_latency = None
 unprotected_latency = None
+
+benchmark_records = {
+    "upload_protected": [],
+    "upload_unprotected": [],
+    "download_protected": [],
+    "download_unprotected": [],
+}
 
 
 @app.route("/")
@@ -46,6 +55,7 @@ def access(view_type: str, photo_id: str):
     global protected_log_store, unprotected_log_store
     global protected_image_url, unprotected_image_url
     global protected_latency, unprotected_latency
+    global benchmark_records
     if view_type.lower() == "protected":
         # Clear previous protected logs *before* making the new access calls
         # This ensures that only the new set of calls for this access are shown.
@@ -68,9 +78,20 @@ def access(view_type: str, photo_id: str):
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
         end_time = time.time()
         latency = end_time - start_time
+        size_kb_protected = len(data) / 1024
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         protected_log_store.extend(logs)
         protected_image_url = image_url
         protected_latency = latency
+        benchmark_records["download_protected"].append(
+            {
+                "filename": photo_id,
+                "latency": latency,
+                "size_kb": size_kb_protected,
+                "timestamp": timestamp,
+            }
+        )
+
         return render_template(
             "index.html",
             protected_logs=protected_log_store,
@@ -95,9 +116,19 @@ def access(view_type: str, photo_id: str):
         image_url = f"data:image/jpeg;base64,{base64.b64encode(data).decode('utf-8')}"
         end_time = time.time()
         latency = end_time - start_time
+        size_kb_unprotected = len(data) / 1024
         unprotected_log_store.extend(logs)
         unprotected_image_url = image_url
         unprotected_latency = latency
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        benchmark_records["download_unprotected"].append(
+            {
+                "filename": photo_id,
+                "latency": latency,
+                "size_kb": size_kb_unprotected,
+                "timestamp": timestamp,
+            }
+        )
         return render_template(
             "index.html",
             protected_logs=protected_log_store,
@@ -131,8 +162,20 @@ def upload_unprotected():
     if file:
         filename = file.filename
         data = file.read()
+        start_time = time.time()
         logs = photo_manager.upload_photo(filename, data, use_oram=False)
+        latency = time.time() - start_time
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        size_kb = len(data) / 1024
         unprotected_log_store.extend(logs)
+        benchmark_records["upload_unprotected"].append(
+            {
+                "filename": filename,
+                "latency": latency,
+                "size_kb": size_kb,
+                "timestamp": timestamp,
+            }
+        )
 
     return redirect(url_for("home"))
 
@@ -151,8 +194,22 @@ def upload_protected():
     if file:
         filename = file.filename
         data = file.read()
-        logs = photo_manager.upload_photo(filename, data, use_oram=True)
+        start_time = time.time()
+        logs = photo_manager.upload_photo(
+            filename, data, use_oram=True
+        )  # FIXED: use_oram=True
+        latency = time.time() - start_time
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        size_kb = len(data) / 1024
         protected_log_store.extend(logs)
+        benchmark_records["upload_protected"].append(
+            {
+                "filename": filename,
+                "latency": latency,
+                "size_kb": size_kb,
+                "timestamp": timestamp,
+            }
+        )
 
     return redirect(url_for("home"))
 
@@ -175,6 +232,20 @@ def clear_logs(view_type):
         unprotected_image_url = None
         unprotected_latency = None
     return redirect(url_for("home"))
+
+
+@app.route("/benchmark")
+def benchmark():
+    return render_template("benchmark.html", records=benchmark_records)
+
+
+@app.route("/clear_benchmark", methods=["POST"])
+def clear_benchmark():
+    global benchmark_records
+    for key in benchmark_records:
+        benchmark_records[key].clear()
+    flash("Benchmark records cleared.")
+    return redirect(url_for("benchmark"))
 
 
 if __name__ == "__main__":

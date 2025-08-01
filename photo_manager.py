@@ -24,9 +24,10 @@ class PhotoManager:
         else:
             self.storage_engine = GCSStorageEngine("normal-bucket-comp6453")
             self.oram_storage_engine = GCSStorageEngine("oram-bucket")
-            self.oram_client = PathOram(
-                num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
-            )
+
+        self.oram_client = PathOram(
+            num_blocks=MAX_FILES, storage_engine=self.oram_storage_engine
+        )
 
         try:
             with open("name2blockid.json", "r") as f:

@@ -1,9 +1,9 @@
 from __future__ import annotations
-from datetime import datetime
 
 import base64
 import logging
 import time
+from datetime import datetime
 
 from flask import Flask, flash, redirect, render_template, request, url_for
 
@@ -31,6 +31,7 @@ benchmark_records = {
     "download_protected": [],
     "download_unprotected": [],
 }
+
 
 @app.route("/")
 def home():
@@ -82,12 +83,14 @@ def access(view_type: str, photo_id: str):
         protected_log_store.extend(logs)
         protected_image_url = image_url
         protected_latency = latency
-        benchmark_records["download_protected"].append({
-            "filename": block_id,
-            "latency": latency,
-            "size_kb": size_kb_protected,
-            "timestamp": timestamp,
-        })
+        benchmark_records["download_protected"].append(
+            {
+                "filename": photo_id,
+                "latency": latency,
+                "size_kb": size_kb_protected,
+                "timestamp": timestamp,
+            }
+        )
 
         return render_template(
             "index.html",
@@ -118,12 +121,14 @@ def access(view_type: str, photo_id: str):
         unprotected_image_url = image_url
         unprotected_latency = latency
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        benchmark_records["download_unprotected"].append({
-            "filename": block_id,
-            "latency": latency,
-            "size_kb": size_kb_unprotected,
-            "timestamp": timestamp,
-        })
+        benchmark_records["download_unprotected"].append(
+            {
+                "filename": photo_id,
+                "latency": latency,
+                "size_kb": size_kb_unprotected,
+                "timestamp": timestamp,
+            }
+        )
         return render_template(
             "index.html",
             protected_logs=protected_log_store,
@@ -144,7 +149,6 @@ def access(view_type: str, photo_id: str):
 
 
 @app.route("/upload/unprotected", methods=["POST"])
-
 def upload_unprotected():
     if "photo_file" not in request.files:
         flash("No file part")
@@ -164,13 +168,14 @@ def upload_unprotected():
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         size_kb = len(data) / 1024
         unprotected_log_store.extend(logs)
-        benchmark_records["upload_unprotected"].append({
-            "filename": filename,
-            "latency": latency,
-            "size_kb": size_kb,
-            "timestamp": timestamp,
-
-        })
+        benchmark_records["upload_unprotected"].append(
+            {
+                "filename": filename,
+                "latency": latency,
+                "size_kb": size_kb,
+                "timestamp": timestamp,
+            }
+        )
 
     return redirect(url_for("home"))
 
@@ -190,17 +195,21 @@ def upload_protected():
         filename = file.filename
         data = file.read()
         start_time = time.time()
-        logs = photo_manager.upload_photo(filename, data, use_oram=True)  # FIXED: use_oram=True
+        logs = photo_manager.upload_photo(
+            filename, data, use_oram=True
+        )  # FIXED: use_oram=True
         latency = time.time() - start_time
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         size_kb = len(data) / 1024
         protected_log_store.extend(logs)
-        benchmark_records["upload_protected"].append({
-            "filename": filename,
-            "latency": latency,
-            "size_kb": size_kb,
-            "timestamp": timestamp,
-        })
+        benchmark_records["upload_protected"].append(
+            {
+                "filename": filename,
+                "latency": latency,
+                "size_kb": size_kb,
+                "timestamp": timestamp,
+            }
+        )
 
     return redirect(url_for("home"))
 
@@ -224,9 +233,11 @@ def clear_logs(view_type):
         unprotected_latency = None
     return redirect(url_for("home"))
 
+
 @app.route("/benchmark")
 def benchmark():
     return render_template("benchmark.html", records=benchmark_records)
+
 
 @app.route("/clear_benchmark", methods=["POST"])
 def clear_benchmark():
@@ -235,6 +246,7 @@ def clear_benchmark():
         benchmark_records[key].clear()
     flash("Benchmark records cleared.")
     return redirect(url_for("benchmark"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

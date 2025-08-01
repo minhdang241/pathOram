@@ -57,3 +57,5 @@ yarn-error.logr
 local_storage/
 protected_images/*
 unprotected_images/*
+stash.json
+name2blockid.json

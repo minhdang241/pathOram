@@ -107,6 +107,25 @@
             <td>{{ r.timestamp }}</td>
         </tr>
         {% endfor %}
+        <tr style="font-weight: bold; background-color: #f0f8ff;">
+          <td>Average</td>
+          <td>
+              {{
+                  "%.4f"|format(
+                      (records[key] | map(attribute='latency') | sum) / (records[key] | length)
+                  )
+              }}
+          </td>
+          <td>
+              {{
+                  "%.2f"|format(
+                      (records[key] | map(attribute='size_kb') | sum) / (records[key] | length)
+                  )
+              }}
+          </td>
+          <td colspan="2"></td>
+      </tr>
+
     </table>
     {% endif %}
     {% endfor %}

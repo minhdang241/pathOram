@@ -21,6 +21,16 @@ repos:
       - id: isort
         args: ["-a", "from __future__ import annotations"]
 
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1  # Pin to a specific version
+    hooks:
+      - id: autoflake
+        args:
+          - --in-place
+          - --remove-all-unused-imports
+          - --remove-unused-variables
+          - --recursive
+
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:

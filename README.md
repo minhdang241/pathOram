@@ -1,8 +1,13 @@
 # How to run
 Make sure that you clean up 2 files `stash.json` and `name2blockid.json`. Also, cleanup 2 folders `protected_images` and `unprotected_images` if there are files existing. Then executing the following command to run the application:
 
+## Running the application
 ```python3
 python3 app.py
+```
+## Running the simulation
+```python3
+python3 simulation.py
 ```
 
 **Note:** you should install all the required packages listed in the `requirements.txt` file.

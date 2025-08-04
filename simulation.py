@@ -52,7 +52,6 @@ class StashSizeSimulator:
 
         with open(filename, "w") as f:
             for stash_size, count in enumerate(ccdf_counts):
-                # Stop if counts become zero, as in the C++ version
                 if count == 0 and stash_size > 0:  # Continue if the first element is 0
                     break
                 f.write(f"{stash_size},{count}\n")
@@ -81,8 +80,6 @@ class StashSizeSimulator:
         print("Stash warmed up. Starting to record results.")
 
         # 3. Recording phase: Perform reads and record stash sizes
-        # pmf_counts[k] will store the number of times the stash size was exactly k.
-        # We size it generously. The max stash size is theoretically num_blocks.
         pmf_counts = [0] * (self.num_blocks + 1)
 
         for i in range(self.num_accesses):
@@ -107,8 +104,6 @@ class StashSizeSimulator:
                 )
 
         # 4. Post-processing: Convert PMF to CCDF
-        # The C++ code calculates the Complementary Cumulative Distribution Function (CCDF).
-        # ccdf_counts[k] = sum(pmf_counts[j] for j >= k)
         print("Calculating final distribution...")
 
         # Initialize CCDF array
@@ -129,7 +124,6 @@ if __name__ == "__main__":
     path_oram_logger = logging.getLogger("oram")
     path_oram_logger.setLevel(logging.CRITICAL)
 
-    # Simulation parameters from the C++ context
     BUCKET_SIZE = 4  # Z
     NUM_BLOCKS = 2**16  # N (e.g., 65536)
     NUM_ACCESSES = 5_000  # Number of accesses to record

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
 from enum import Enum
 
 from oram import PathOram
@@ -81,7 +82,7 @@ class StashSizeSimulator:
 
         # 3. Recording phase: Perform reads and record stash sizes
         pmf_counts = [0] * (self.num_blocks + 1)
-
+        start_time = time.time()
         for i in range(self.num_accesses):
             block_id = i % self.num_blocks
             oram.access(Operation.READ, block_id, None)
@@ -103,6 +104,9 @@ class StashSizeSimulator:
                     f"Accessed {i + 1:,}/{self.num_accesses:,}. Current stash size = {recorded_size}"
                 )
 
+        end_time = time.time()
+        latency = end_time - start_time
+
         # 4. Post-processing: Convert PMF to CCDF
         print("Calculating final distribution...")
 
@@ -117,6 +121,14 @@ class StashSizeSimulator:
 
         # 5. Write the final results to a file
         self._write_simulation_results(ccdf_counts)
+
+        # Calculate and report simulation statistics
+        avg_accesses_per_sec = self.num_accesses / latency if latency > 0 else 0
+        max_stash_size = len([count for count in ccdf_counts if count > 0]) - 1
+        print(
+            f"Simulation Report: {self.num_accesses:,} accesses on {self.num_blocks:,} blocks with bucket size {self.bucket_size}, "
+            f"completed in {latency:.2f}s ({avg_accesses_per_sec:.0f} accesses/sec), max stash size observed: {max_stash_size}"
+        )
 
 
 # Example of how to run the simulator

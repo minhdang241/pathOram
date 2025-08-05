@@ -20,3 +20,20 @@ The system has three main components:
 Providing 2 views:
 - **Unprotected view**: user clicks a photo, the server log shows a single, revealing request: `GET /unprotected-bucket/my_trip.jpg`. The access pattern is leaked.
 - **Protected view**: user clicks the same photo. The server logs shows a bunch of meaningless objects (e.g., GET /oram-bucket/5, PUT /oram-bucket/29, ...), revealing nothing about the photo itself. This shows that the access pattern has been hidden.
+
+
+# Implementation Details
+
+- **oram.py**: contains the implementation of the oram algorithm used to ensure secure read and write operations to an untrusted server. 
+
+- **storage_engine.py**: contains the storage engine interface that defines how a storage engine should behave. Additionally, it contains an implementation of a local storage client which can be used to run the application using client-side storage. This is useful when testing and benchmarking as it removes fluctuations in server-side latency. Lastly, there is an implementation of the of a Google Cloud Storage (GCS) engine. This can be used to connect the ORAM powered photo management scheme to GCS. Other cloud providers can be added by creating similar storage engines that implement the functions defined in the storage engine interface.
+
+- **photo_manager.py**: contains the photo manager class which handles the process of uploading and downloading photos. This is the class that calls the ORAM algorithm and logs the calls made to the frontend.
+
+- **app.py**: contains the implementation of the web application. This includes the API calls to download and upload photos, as well as the additional frontend features such as displaying benchmarking results, clearing logs and displaying the intended images.
+
+- **common.py**: contains helper and utility functions.
+
+- **stash.json**: stores the position_map of the ORAM algorithm, as well as some metadata about the binary tree used in the algorithm. This file is important for persistence, as without it the positions of previously stored images are lost. When resetting the application, it is important to clear this file.
+
+- **name2blockid.json**: stores a mapping from the unprotected file name to the anononymised file label. This file is important for persistence as without it the link between the file name known to the user and the pseuodo-name of the file in the untrusted server is lost. When resetting the application, it is important to clear this file.

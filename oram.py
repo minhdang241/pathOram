@@ -39,6 +39,10 @@ class OramInterface(ABC):
     ) -> Optional[List[int]]:
         pass
 
+    @abstractmethod
+    def get_stash_size(self) -> int:
+        pass
+
 
 class PathOram(OramInterface):
     """
@@ -55,6 +59,7 @@ class PathOram(OramInterface):
         storage_engine: StorageEngine = LocalStorageEngine(
             "local_storage/unprotected_images"
         ),
+        persist: bool = True,
     ):
         self.N = num_blocks
         self.Z = bucket_size
@@ -62,7 +67,8 @@ class PathOram(OramInterface):
         self.num_leaves = 2**self.L
         self.stash_file = "stash.json"  # File to store the stash state
         self.storage_engine = storage_engine
-        if self._load_stash():
+        self.persist = persist
+        if self.persist and self._load_stash():
             new_position = {}
             # convert string keys to int keys since the json format requires the keys as string
             for key, value in self.position.items():
@@ -169,7 +175,8 @@ class PathOram(OramInterface):
         write_logs = self._write_path(old_leaf, buckets)
         logs.extend(write_logs)
         # save after each access to avoid losing track of the stash when the server restarts / crashes
-        self._save_stash()
+        if self.persist:
+            self._save_stash()
         return target_block.data, logs
 
     def _get_root_to_leaf_path(self, leaf_id: int) -> List[int]:
@@ -304,3 +311,11 @@ class PathOram(OramInterface):
         except Exception as e:
             logger.error(f"Error loading stash: {e}")
             return False
+
+    def get_stash_size(self) -> int:
+        """
+        Get the current size of the stash.
+        Returns:
+            int: The number of blocks currently in the stash.
+        """
+        return len(self.S)

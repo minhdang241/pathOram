@@ -8,7 +8,6 @@ import os
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from google.cloud import storage
 
 from common import Block, Bucket, Log
@@ -43,7 +42,6 @@ class StorageEngine(ABC):
         """
         Write a file to the storage engine.
         """
-        pass
 
     def write_multiple(self, data: Dict[str, bytes]) -> List[Log]:
         logs = []
@@ -72,7 +70,6 @@ class StorageEngine(ABC):
         """
         List file names in unprotected bucket (unprotected)
         """
-        pass
 
 
 class LocalStorageEngine(StorageEngine):
@@ -150,3 +147,29 @@ class GCSStorageEngine(StorageEngine):
 
     def list_photo_ids(self) -> List[str]:
         return sorted([f.name for f in self.storageClient.list_blobs(self.bucket)])
+
+
+class InMemoryStorageEngine(StorageEngine):
+    def __init__(self):
+        self.storage: Dict[str, Bucket] = {}
+        logger.info("InMemoryStorageEngine initialized")
+
+    def read(self, filename: str) -> Tuple[bytes, Log]:
+        if filename in self.storage:
+            return self.storage[filename], Log(value=f"GET /{filename}")
+        else:
+            return b"", Log(value=f"Error reading {filename}: File not found")
+
+    def write(self, filename: str, data: bytes) -> Log:
+        self.storage[filename] = data
+        return Log(value=f"PUT /{filename}")
+
+    def list_photo_ids(self) -> List[str]:
+        return sorted(self.storage.keys())
+
+    def read_multiple(self, filenames: List[str]) -> List[Tuple[bytes, Log]]:
+        results = []
+        for filename in filenames:
+            data, log = self.read(filename)
+            results.append((data, log))
+        return results

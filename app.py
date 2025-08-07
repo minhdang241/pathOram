@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
-photo_manager = PhotoManager(is_local=False)
+photo_manager = PhotoManager(is_local=True)
 app.secret_key = "7832"
 
 protected_log_store = []
@@ -229,7 +229,7 @@ def clear_logs(view_type):
         protected_latency = None
     elif view_type.lower() == "unprotected":
         unprotected_log_store.clear()
-        unprotected_image_url = None 
+        unprotected_image_url = None
         unprotected_latency = None
     return redirect(url_for("home"))
 
